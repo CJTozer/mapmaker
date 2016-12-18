@@ -50,4 +50,4 @@ data/naturalearthdata/%:
 
 # Generate a sha from e.g. a data source name and a filter string.
 # `$(call get_sha,naturalearthdata/10m/cultural/ne_10m_admin_0_map_subunits ADM0_A3 IN ('GBR', 'IRL'))`
-get_sha = $(shell echo "$(1)" | sha1sum | cut -d " " -f1)
+get_sha = $(shell echo $(1) | sha1sum | cut -d " " -f1)
