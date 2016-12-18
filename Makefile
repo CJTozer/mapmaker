@@ -4,10 +4,11 @@
 # - [x] Get data from naturalearthdata
 # - [x] Filter down (and convert to JSON) using ogr2ogr
 #   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
-# - [ ] Convert to TopoJSON format
+# - [x] Convert to TopoJSON format
 #   - `topojson -o topo.json -- geo.json`
 # - [ ] Copy to /test-site (boiler-plate test site)
-# - [ ] Generate example/*.mk from example/*.json (?)
+# - [ ] Just do it in Python, reading from a JSON file?
+# - [ ] Sort out dependencies - right now everything is happening always...
 
 
 ### Main makefile

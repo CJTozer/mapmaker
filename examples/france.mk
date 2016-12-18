@@ -9,20 +9,33 @@ examples_france_DATA_SHP = $(examples_france_DATA_DIR)/$(examples_france_DATA_TY
 # Behaviour
 examples_france_FILTER = "ADM0_A3 IN ('FRA')"
 examples_france_FILTER_SHA = $(call get_sha,$(examples_france_DATA_DIR) $(FILTER))
-examples_france_INTERMEDIATE_GEO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).json
-examples_france_INTERMEDIATE_TOPO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).topo
+examples_france_INTERMEDIATE_GEO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).geo.json
+examples_france_INTERMEDIATE_TOPO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).topo.json
 
+# Build target
+.PHONY: examples/france
 examples/france: \
 	$(examples_france_INTERMEDIATE_TOPO)
 
+# Make intermediate GeoJSON file, with specified filter
 $(examples_france_INTERMEDIATE_GEO): \
 	build-dir \
 	$(examples_france_DATA_DIR)
 $(examples_france_INTERMEDIATE_GEO):
-	rm -f $(BUILD_DIR)/$(examples_france_FILTER_SHA).json
-	ogr2ogr -f GeoJSON -where $(examples_france_FILTER) $(BUILD_DIR)/$(examples_france_FILTER_SHA).json $(examples_france_DATA_SHP)
+	rm -f $(examples_france_INTERMEDIATE_GEO)
+	ogr2ogr -f GeoJSON -where $(examples_france_FILTER) $(examples_france_INTERMEDIATE_GEO) $(examples_france_DATA_SHP)
 
+# Make intermediate TopoJSON file (give it a sensible name in the mean time though as this is used in the JSON)
 $(examples_france_INTERMEDIATE_TOPO): \
 	$(examples_france_INTERMEDIATE_GEO)
 $(examples_france_INTERMEDIATE_TOPO):
-	topojson -o $(examples_france_INTERMEDIATE_TOPO) -- $(examples_france_INTERMEDIATE_GEO)
+	cp $(examples_france_INTERMEDIATE_GEO) $(BUILD_DIR)/data.json
+	topojson -o $(examples_france_INTERMEDIATE_TOPO) -- $(BUILD_DIR)/data.json
+	rm -f $(BUILD_DIR)/data.json
+
+# Copy TopoJSON file to test site
+.PHONY: examples/france/test
+examples/france/test: \
+	$(examples_france_INTERMEDIATE_TOPO)
+examples/france/test:
+	cp $(examples_france_INTERMEDIATE_TOPO) test-site/test.json
