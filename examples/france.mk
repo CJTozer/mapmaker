@@ -11,6 +11,7 @@ examples_france_FILTER = "ADM0_A3 IN ('FRA')"
 examples_france_FILTER_SHA = $(call get_sha,$(examples_france_DATA_DIR) $(FILTER))
 examples_france_INTERMEDIATE_GEO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).geo.json
 examples_france_INTERMEDIATE_TOPO = $(BUILD_DIR)/$(examples_france_FILTER_SHA).topo.json
+examples_france_TOPO_FLAGS = --id-property SU_A3
 
 # Build target
 .PHONY: examples/france
@@ -30,7 +31,7 @@ $(examples_france_INTERMEDIATE_TOPO): \
 	$(examples_france_INTERMEDIATE_GEO)
 $(examples_france_INTERMEDIATE_TOPO):
 	cp $(examples_france_INTERMEDIATE_GEO) $(BUILD_DIR)/subunits.json
-	topojson -o $(examples_france_INTERMEDIATE_TOPO) -- $(BUILD_DIR)/subunits.json
+	topojson -o $(examples_france_INTERMEDIATE_TOPO) $(examples_france_TOPO_FLAGS) -- $(BUILD_DIR)/subunits.json
 	rm -f $(BUILD_DIR)/subunits.json
 
 # Copy TopoJSON file to test site
