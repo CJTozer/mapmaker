@@ -19,6 +19,8 @@ OUTPUT_DIR=output
 help:
 	@echo "Targets:"
 	@echo "    (sudo) make dependencies"
+	@echo "    make examples/france"
+	@echo "    make user/yourmap"
 
 dependencies:
 	@apt-get -y install wget unzip # WGET, unzip

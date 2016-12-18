@@ -18,6 +18,5 @@ $(examples_france_INTERMEDIATE_FILE): \
 	build-dir \
 	$(examples_france_DATA_DIR)
 $(examples_france_INTERMEDIATE_FILE):
-	@rm -f $(BUILD_DIR)/$(examples_france_FILTER_SHA).json
-	@ogr2ogr -f GeoJSON -where $(examples_france_FILTER) $(BUILD_DIR)/$(examples_france_FILTER_SHA).json $(examples_france_DATA_SHP)
-
+	rm -f $(BUILD_DIR)/$(examples_france_FILTER_SHA).json
+	ogr2ogr -f GeoJSON -where $(examples_france_FILTER) $(BUILD_DIR)/$(examples_france_FILTER_SHA).json $(examples_france_DATA_SHP)
