@@ -29,9 +29,9 @@ $(examples_france_INTERMEDIATE_GEO):
 $(examples_france_INTERMEDIATE_TOPO): \
 	$(examples_france_INTERMEDIATE_GEO)
 $(examples_france_INTERMEDIATE_TOPO):
-	cp $(examples_france_INTERMEDIATE_GEO) $(BUILD_DIR)/data.json
-	topojson -o $(examples_france_INTERMEDIATE_TOPO) -- $(BUILD_DIR)/data.json
-	rm -f $(BUILD_DIR)/data.json
+	cp $(examples_france_INTERMEDIATE_GEO) $(BUILD_DIR)/subunits.json
+	topojson -o $(examples_france_INTERMEDIATE_TOPO) -- $(BUILD_DIR)/subunits.json
+	rm -f $(BUILD_DIR)/subunits.json
 
 # Copy TopoJSON file to test site
 .PHONY: examples/france/test

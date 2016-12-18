@@ -18,11 +18,20 @@ var svg = d3.select("body").append("svg")
     .attr("height", height);
 
 d3.json("test.json", function(error, map_data) {
-  if (error) return console.error(error);
+    if (error) return console.error(error);
 
-  svg.append("path")
-      .datum(topojson.feature(map_data, map_data.objects.data))
-      .attr("d", d3.geo.path().projection(d3.geo.mercator()));
+    var subunits = topojson.feature(map_data, map_data.objects.subunits);
+    var projection = d3.geo.albers()
+        .center([5, 45.4])
+        .rotate([4.4, 0])
+        .parallels([50, 60])
+        .scale(4000)
+        .translate([width / 2, height / 2]);
+    var path = d3.geo.path()
+        .projection(projection);
+    svg.append("path")
+        .datum(subunits)
+        .attr("d", path);
 });
 
 </script>

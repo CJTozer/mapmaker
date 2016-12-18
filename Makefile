@@ -8,6 +8,7 @@
 #   - `topojson -o topo.json -- geo.json`
 # - [ ] Copy to /test-site (boiler-plate test site)
 # - [ ] Just do it in Python, reading from a JSON file?
+# - [ ] Move all the re-scaling, projections etc. into the map Makefile not the HTML?
 # - [ ] Sort out dependencies - right now everything is happening always...
 
 
