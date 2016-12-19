@@ -1,4 +1,4 @@
-### Exmaple Makefile for creating a simple map of France
+### Example Makefile for creating a simple map of France
 
 # Files/folders
 examples_france_BASE_DATA = data/naturalearthdata/10m/cultural
