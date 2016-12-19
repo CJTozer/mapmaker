@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/CJTozer/mapmaker/issues"
   },
-  "homepage": "https://github.com/CJTozer/mapmaker#readme"
+  "homepage": "https://github.com/CJTozer/mapmaker#readme",
+  "dependencies": {
+    "commander": "^2.9.0"
+  }
 }
