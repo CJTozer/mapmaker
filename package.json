@@ -1,0 +1,25 @@
+{
+  "name": "mapmaker",
+  "version": "0.0.1",
+  "description": "Tool for building maps",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "mapmaker": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CJTozer/mapmaker.git"
+  },
+  "author": "Chris Tozer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CJTozer/mapmaker/issues"
+  },
+  "homepage": "https://github.com/CJTozer/mapmaker#readme"
+}
