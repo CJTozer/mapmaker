@@ -1,4 +1,20 @@
 #!/usr/bin/env node
+
+/* jshint esversion: 6 */
+
+//// Steps to reproduce below.
+// (From https://bost.ocks.org/mike/map/ and https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c#.u7rhxzq3t)
+//
+// - [ ] Get data from naturalearthdata
+// - [ ] Filter down (and convert to JSON) using ogr2ogr
+//   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
+// - [ ] Convert to TopoJSON format
+//   - `topojson -o topo.json -- geo.json`
+// - [ ] Copy to /test-site (boiler-plate test site)
+// - [ ] Just do it in Python, reading from a JSON file?
+// - [ ] Move all the re-scaling, projections etc. into the map Makefile not the HTML?
+// - [ ] Sort out dependencies - right now everything is happening always...
+
 const chalk = require('chalk');
 const Config = require('merge-config');
 const download = require('download');
@@ -29,12 +45,12 @@ function build_map(spec_file) {
 // Ensure raw data is available
 function ensure_data(config) {
   var shape_data = config.get('shape_data');
-  var repo_info = config.get('repos')[shape_data['repo']];
+  var repo_info = config.get('repos')[shape_data.repo];
 
   // Get the destination and check for existing data.
-  var shape_file = shape_data['file'];
+  var shape_file = shape_data.file;
   var file_base = shape_file.substr(0, shape_file.lastIndexOf('.')) || shape_file;
-  var destination = path.join('data', shape_data['repo'], shape_data['base'], file_base);
+  var destination = path.join('data', shape_data.repo, shape_data.base, file_base);
   try {
     // No error if already present, so return empty promise.
     fs.statSync(destination);
@@ -42,7 +58,7 @@ function ensure_data(config) {
     return Promise.resolve();
   } catch (err) {
     // Directory doesn't exist, proceed with download.
-    var url = urljoin(repo_info['base_url'], shape_data['base'], shape_file);
+    var url = urljoin(repo_info.base_url, shape_data.base, shape_file);
     console.log(chalk.bold.yellow('Downloading data: ') + url);
 
     // Return the promise of complete downloads.
