@@ -12,8 +12,7 @@
 //   - `topojson -o topo.json -- geo.json`
 // - [ ] Copy to /test-site (boiler-plate test site)
 // - [ ] Just do it in Python, reading from a JSON file?
-// - [ ] Move all the re-scaling, projections etc. into the map Makefile not the HTML?
-// - [ ] Sort out dependencies - right now everything is happening always...
+// - [ ] Move all the re-scaling, projections etc. into the map specfile not the HTML?
 
 const async = require('async');
 const chalk = require('chalk');
@@ -39,29 +38,23 @@ program
 function build_map(spec_file) {
   async.series({
     build_config: function(callback) {
+      console.log(chalk.bold.cyan('Building config...'));
       build_config(callback, spec_file);
     },
-    one: function(callback) {
-      console.log("running one");
-      setTimeout(function() {
-        callback(null, 1);
-      }, 200);
+    get_data_files: function(callback) {
+      console.log(chalk.bold.cyan('Checking data sources...'));
+      get_data_files(callback);
+    },
+    filter_data: function(callback) {
+      console.log(chalk.bold.cyan('Filtering data...'));
+      filter_data(callback);
     },
   }, function(err, results) {
-      // results is now equal to: {one: 1, two: 2}
-  });
-}
-
-function build_map_old(spec_file) {
-  build_config(spec_file);
-
-  ensure_data(config).then(() => {
-    // @@@ TODO Continue with map building...
-    filter_data();
-    console.log(chalk.bold.green('Complete!') + '  Finished processing for ' + spec_file);
-  }, (err) => {
-    console.log(chalk.bold.red('Failed!  ') + 'Could not retrieve data.');
-    console.log(err);
+    if (err) {
+      console.log(chalk.bold.red('Failed!  ') + err);
+    } else {
+      console.log(chalk.bold.green('Complete!') + '  Finished processing for ' + spec_file);
+    }
   });
 }
 
@@ -96,37 +89,40 @@ function build_config(callback, spec_file) {
 }
 
 // Ensure raw data is available.
-function ensure_data() {
+function get_data_files(callback) {
   // Get the destination and check for existing data.
   try {
     // No error if already present, so return empty promise.
     fs.statSync(config.derived.shape_dir);
     console.log(chalk.bold.yellow('Data already available: ') + config.derived.shape_dir);
-    return Promise.resolve();
+    return callback(null);
   } catch (err) {
     // Directory doesn't exist, proceed with download.
     console.log(chalk.bold.yellow('Downloading data: ') + config.derived.download_url);
 
     // Return the promise of complete downloads.
-    return download(config.derived.download_url, config.derived.shape_dir, {extract: true});
+    download(config.derived.download_url, config.derived.shape_dir, {extract: true}).then(() => {
+      return callback(null);
+    }, (err) => {
+      return callback(err);
+    });
   }
 }
 
 // Filter data using ogr2ogr.
-function filter_data() {
-  console.log("STARTING");
+function filter_data(callback) {
+  // @@@ Ensure build directory exists otherwise this will fail.
+  // @@@ Delete existing test.json
+  // @@@ Use a unique hash for this filtered file, and check whether file already exists.
   var ogr = ogr2ogr(config.derived.shape_file)
     .format('GeoJSON') // @@@ Get this from repo config?
     .options(['-where', 'ADM0_A3 IN (\'FRA\')'])
     .destination(path.join('build', 'test.json'))
     .stream()
     .on('error', (err) => {
-      console.log(err);
+      return callback(err);
     })
     .on('close', () => {
-      console.log("DONE");
+      return callback(null);
     });
-
-  // @@@ Switch all this stuff to use async.series.
-  // Each success/failure case then calls the provided callback (with the error or null) and this ensures serial operation.
 }
