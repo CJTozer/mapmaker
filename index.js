@@ -24,16 +24,16 @@ const program = require('commander');
 const urljoin = require('url-join');
 
 // Globals
-var config = new Config();
+var config = {};
 
-// Main entrypoint using commander - calls build_map
+// Main entrypoint using commander - calls build_map.
 program
   .arguments('<spec_file>', 'Config file defining the map to build.  E.g. examples/france.yaml')
   .option('-t, --test', 'Copy resulting map to test server')
   .action(build_map)
   .parse(process.argv);
 
-// Main processing function
+// Main processing function.
 function build_map(spec_file) {
   build_config(spec_file);
 
@@ -49,33 +49,44 @@ function build_map(spec_file) {
 // Build up the configuration.
 function build_config(spec_file) {
   // Get the global defaults then override with the specified specification.
-  config.file('defaults.yaml');
-  config.file(spec_file);
+  var built_config = new Config();
+  built_config.file('defaults.yaml');
+  built_config.file(spec_file);
 
+  // Set up derived config values:
+  // - Download dirs and shapefile name
+  var shape_data = built_config.get('shape_data');
+  var file_base = shape_data.filename.substr(0, shape_data.filename.lastIndexOf('.')) || shape_data.filename;
+  var shape_dir = path.join('data', shape_data.repo, shape_data.base, file_base);
+  built_config.set('derived:shape_dir',  shape_dir);
+  built_config.set('derived:shape_file', path.join(shape_dir, file_base + '.shp'));
+
+  // - Info for the current repo
+  var repo_info = built_config.get('repos')[shape_data.repo];
+  built_config.set('derived:repo_info', repo_info);
+
+  // - Download target
+  built_config.set('derived:download_url', urljoin(repo_info.base_url, shape_data.base, shape_data.filename));
+
+  // Store off the config as a 'normal' object.
+  config = built_config.get();
   console.log(chalk.bold.cyan('Config:'));
-  console.log(config.get());
+  console.log(config);
 }
 
-// Ensure raw data is available
-function ensure_data(config) {
-  var shape_data = config.get('shape_data');
-  var repo_info = config.get('repos')[shape_data.repo];
-
+// Ensure raw data is available.
+function ensure_data() {
   // Get the destination and check for existing data.
-  var shape_file = shape_data.file;
-  var file_base = shape_file.substr(0, shape_file.lastIndexOf('.')) || shape_file;
-  var destination = path.join('data', shape_data.repo, shape_data.base, file_base);
   try {
     // No error if already present, so return empty promise.
-    fs.statSync(destination);
-    console.log(chalk.bold.yellow('Data already available: ') + destination);
+    fs.statSync(config.derived.shape_dir);
+    console.log(chalk.bold.yellow('Data already available: ') + config.derived.shape_dir);
     return Promise.resolve();
   } catch (err) {
     // Directory doesn't exist, proceed with download.
-    var url = urljoin(repo_info.base_url, shape_data.base, shape_file);
-    console.log(chalk.bold.yellow('Downloading data: ') + url);
+    console.log(chalk.bold.yellow('Downloading data: ') + config.derived.download_url);
 
     // Return the promise of complete downloads.
-    return download(url, destination, {extract: true});
+    return download(config.derived.download_url, config.derived.shape_dir, {extract: true});
   }
 }
