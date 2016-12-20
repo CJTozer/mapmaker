@@ -1,7 +1,8 @@
 shape_data:
   repo: naturalearthdata
   base: 10m/cultural
-  type: ne_10m_admin_0_map_subunits
+  file: ne_10m_admin_0_map_subunits.zip
+  compressed: true
 parameters:
   countries:
     - FRA

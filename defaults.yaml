@@ -1,4 +1,5 @@
 # Default locations for repositories (to get initial shapefiles)
 repos:
   naturalearthdata:
-    url: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download
+    # Weird \/ here as urljoin converts '//' to '/' but that doesn't work on naturalearthdata
+    url: http://www.naturalearthdata.com/http\//www.naturalearthdata.com/download

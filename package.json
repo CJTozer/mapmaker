@@ -25,7 +25,9 @@
   "dependencies": {
     "chalk": "^1.1.3",
     "commander": "^2.9.0",
+    "download": "^5.0.2",
     "merge-config": "^2.0.0",
-    "ogr2ogr": "^1.0.0"
+    "ogr2ogr": "^1.0.0",
+    "url-join": "^1.1.0"
   }
 }
