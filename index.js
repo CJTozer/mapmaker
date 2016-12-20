@@ -6,7 +6,7 @@
 // (From https://bost.ocks.org/mike/map/ and https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c#.u7rhxzq3t)
 //
 // - [x] Get data from naturalearthdata
-// - [ ] Filter down (and convert to JSON) using ogr2ogr
+// - [x] Filter down (and convert to JSON) using ogr2ogr
 //   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
 // - [ ] Convert to TopoJSON format
 //   - `topojson -o topo.json -- geo.json`
@@ -15,6 +15,7 @@
 // - [ ] Move all the re-scaling, projections etc. into the map Makefile not the HTML?
 // - [ ] Sort out dependencies - right now everything is happening always...
 
+const async = require('async');
 const chalk = require('chalk');
 const Config = require('merge-config');
 const download = require('download');
@@ -36,6 +37,22 @@ program
 
 // Main processing function.
 function build_map(spec_file) {
+  async.series({
+    build_config: function(callback) {
+      build_config(callback, spec_file);
+    },
+    one: function(callback) {
+      console.log("running one");
+      setTimeout(function() {
+        callback(null, 1);
+      }, 200);
+    },
+  }, function(err, results) {
+      // results is now equal to: {one: 1, two: 2}
+  });
+}
+
+function build_map_old(spec_file) {
   build_config(spec_file);
 
   ensure_data(config).then(() => {
@@ -49,7 +66,7 @@ function build_map(spec_file) {
 }
 
 // Build up the configuration.
-function build_config(spec_file) {
+function build_config(callback, spec_file) {
   // Get the global defaults then override with the specified specification.
   var built_config = new Config();
   built_config.file('defaults.yaml');
@@ -74,6 +91,8 @@ function build_config(spec_file) {
   config = built_config.get();
   console.log(chalk.bold.cyan('Config:'));
   console.log(config);
+
+  return callback(null);
 }
 
 // Ensure raw data is available.
