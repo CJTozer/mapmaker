@@ -19,6 +19,7 @@ const chalk = require('chalk');
 const Config = require('merge-config');
 const download = require('download');
 const fs = require('fs');
+const ogr2ogr = require('ogr2ogr');
 const path = require('path');
 const program = require('commander');
 const urljoin = require('url-join');
@@ -39,6 +40,7 @@ function build_map(spec_file) {
 
   ensure_data(config).then(() => {
     // @@@ TODO Continue with map building...
+    filter_data();
     console.log(chalk.bold.green('Complete!') + '  Finished processing for ' + spec_file);
   }, (err) => {
     console.log(chalk.bold.red('Failed!  ') + 'Could not retrieve data.');
@@ -89,4 +91,23 @@ function ensure_data() {
     // Return the promise of complete downloads.
     return download(config.derived.download_url, config.derived.shape_dir, {extract: true});
   }
+}
+
+// Filter data using ogr2ogr.
+function filter_data() {
+  console.log("STARTING");
+  var ogr = ogr2ogr(config.derived.shape_file)
+    .format('GeoJSON') // @@@ Get this from repo config?
+    .options(['-where', 'ADM0_A3 IN (\'FRA\')'])
+    .destination(path.join('build', 'test.json'))
+    .stream()
+    .on('error', (err) => {
+      console.log(err);
+    })
+    .on('close', () => {
+      console.log("DONE");
+    });
+
+  // @@@ Switch all this stuff to use async.series.
+  // Each success/failure case then calls the provided callback (with the error or null) and this ensures serial operation.
 }
