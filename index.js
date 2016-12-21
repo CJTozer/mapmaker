@@ -1,4 +1,4 @@
-#!/usr/bin/env node --harmony
+#!/usr/bin/env node
 /* jshint esversion: 6 */
 'use strict';
 
@@ -8,10 +8,8 @@
 // - [x] Get data from naturalearthdata
 // - [x] Filter down (and convert to JSON) using ogr2ogr
 //   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
-// - [ ] Convert to TopoJSON format
-//   - `topojson -o topo.json -- geo.json`
+// - [ ] Store off the resulting JSON.
 // - [ ] Copy to /test-site (boiler-plate test site)
-// - [ ] Just do it in Python, reading from a JSON file?
 // - [ ] Move all the re-scaling, projections etc. into the map specfile not the HTML?
 
 const async = require('async');
@@ -26,6 +24,7 @@ const urljoin = require('url-join');
 
 // Globals
 var config = {};
+var data = {};
 
 // Main entrypoint using commander - calls build_map.
 program
@@ -48,6 +47,11 @@ function build_map(spec_file) {
     filter_data: function(callback) {
       console.log(chalk.bold.cyan('Filtering data...'));
       filter_data(callback);
+    },
+    write_to_test_site: function(callback) {
+      // @@@ Only do this with the -t flag.
+      console.log(chalk.bold.cyan('Writing to test-site...'));
+      write_to_test_site(callback);
     },
   }, function(err, results) {
     if (err) {
@@ -111,18 +115,20 @@ function get_data_files(callback) {
 
 // Filter data using ogr2ogr.
 function filter_data(callback) {
-  // @@@ Ensure build directory exists otherwise this will fail.
-  // @@@ Delete existing test.json
-  // @@@ Use a unique hash for this filtered file, and check whether file already exists.
   var ogr = ogr2ogr(config.derived.shape_file)
     .format('GeoJSON') // @@@ Get this from repo config?
     .options(['-where', 'ADM0_A3 IN (\'FRA\')'])
-    .destination(path.join('build', 'test.json'))
-    .stream()
-    .on('error', (err) => {
-      return callback(err);
-    })
-    .on('close', () => {
+    .exec(function (err, geo_data) {
+      if (err) return callback(err);
+      data = geo_data;
       return callback(null);
     });
+}
+
+// Write data to the test-site.
+function write_to_test_site(callback) {
+  fs.writeFile('test-site/test.json', JSON.stringify(data), (err) => {
+    if (err) return callback(err);
+    return callback(null);
+  });
 }
