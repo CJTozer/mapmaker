@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --harmony
 /* jshint esversion: 6 */
 'use strict';
 
