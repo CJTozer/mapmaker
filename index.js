@@ -115,9 +115,10 @@ function get_data_files(callback) {
 
 // Filter data using ogr2ogr.
 function filter_data(callback) {
+  var filter = "ADM0_A3 IN (\'" + config.parameters.countries.join("\', \'") + "\')";
   var ogr = ogr2ogr(config.derived.shape_file)
     .format('GeoJSON') // @@@ Get this from repo config?
-    .options(['-where', 'ADM0_A3 IN (\'FRA\')'])
+    .options(['-where', filter])
     .exec(function (err, geo_data) {
       if (err) return callback(err);
       data = geo_data;
