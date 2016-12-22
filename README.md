@@ -6,3 +6,8 @@
 
 * NodeJS
 * `ogr2ogr` (from e.g. `sudo apt-get install gdal-bin`)
+
+## How to use
+
+* @@@ TODO
+* See list of country codes [here](https://www.unc.edu/~rowlett/units/codes/country.htm) for reference.

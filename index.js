@@ -86,9 +86,6 @@ function build_config(callback, spec_file) {
 
   // Store off the config as a 'normal' object.
   config = built_config.get();
-  console.log(chalk.bold.cyan('Config:'));
-  console.log(config);
-
   return callback(null);
 }
 
