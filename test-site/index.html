@@ -27,7 +27,6 @@ var svg = d3.select("body").append("svg")
 d3.json("test.json", function(error, map_data) {
     if (error) return console.error(error);
 
-    var subunits = topojson.feature(map_data, map_data.objects.subunits);
     var projection = d3.geo.albers()
         .center([5, 45.4])
         .rotate([4.4, 0])
@@ -39,7 +38,7 @@ d3.json("test.json", function(error, map_data) {
 
     // Split out the subunits
     svg.selectAll(".subunit")
-        .data(topojson.feature(map_data, map_data.objects.subunits).features)
+        .data(map_data.features)
         .enter().append("path")
         .attr("class", function(d) { return "subunit " + d.id; })
         .attr("d", path);
