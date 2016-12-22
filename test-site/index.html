@@ -3,11 +3,11 @@
 <style>
 
 /* France */
-.subunit.FXX {
+.country.FRA {
     fill: #bb88bb;
 }
-/* Corsica */
-.subunit.FXC {
+/* Italy */
+.country.ITA {
     fill: #bbbbbb;
 }
 
@@ -24,24 +24,22 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("test.json", function(error, map_data) {
+d3.json("map_data.json", function(error, map_data) {
     if (error) return console.error(error);
 
     // @@@ TODO - get projection from spec
-    var projection = d3.geo.albers()
-        .center([15, 48])
-        .rotate([4.4, 0])
-        .parallels([50, 60])
-        .scale(3000)
+    var projection = d3.geo.mercator()
+        .center([15, 50])
+        .scale(1200)
         .translate([width / 2, height / 2]);
     var path = d3.geo.path()
         .projection(projection);
 
     // Split out the subunits
-    svg.selectAll(".subunit")
+    svg.selectAll(".country")
         .data(map_data.features)
         .enter().append("path")
-        .attr("class", function(d) { return "subunit " + d.id; })
+        .attr("class", function(d) { return "country " + d.properties.ADM0_A3; })
         .attr("d", path);
 });
 

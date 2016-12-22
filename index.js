@@ -8,8 +8,8 @@
 // - [x] Get data from naturalearthdata
 // - [x] Filter down (and convert to JSON) using ogr2ogr
 //   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
-// - [ ] Store off the resulting JSON.
-// - [ ] Copy to /test-site (boiler-plate test site)
+// - [x] Store off the resulting JSON.
+// - [x] Copy to /test-site (boiler-plate test site)
 // - [ ] Move all the re-scaling, projections etc. into the map specfile not the HTML?
 
 const async = require('async');
@@ -125,7 +125,7 @@ function filter_data(callback) {
 
 // Write data to the test-site.
 function write_to_test_site(callback) {
-  fs.writeFile('test-site/test.json', JSON.stringify(data), (err) => {
+  fs.writeFile('test-site/map_data.json', JSON.stringify(data), (err) => {
     if (err) return callback(err);
     return callback(null);
   });

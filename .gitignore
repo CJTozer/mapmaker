@@ -2,7 +2,7 @@
 /build
 /output
 /node_modules
-/test-site/test.json
+/test-site/map_data.json
 
 # ST3 project files
 *.sublime-*
