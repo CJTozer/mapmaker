@@ -3,12 +3,12 @@
 <style>
 
 /* France */
-.country.FRA {
+.ADM0_A3-FRA {
     fill: #bb88bb;
 }
 /* Italy */
-.country.ITA {
-    fill: #bbbbbb;
+.ADM0_A3-ITA {
+    fill: #88bbbb;
 }
 
 </style>
@@ -39,7 +39,7 @@ d3.json("map_data.json", function(error, map_data) {
     svg.selectAll(".country")
         .data(map_data.features)
         .enter().append("path")
-        .attr("class", function(d) { return "country " + d.properties.ADM0_A3; })
+        .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
         .attr("d", path);
 });
 
