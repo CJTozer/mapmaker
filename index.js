@@ -12,15 +12,23 @@
 // - [x] Copy to /test-site (boiler-plate test site)
 // - [ ] Move all the re-scaling, projections etc. into the map specfile not the HTML?
 
+// 'Normal' imports.
+const jsdom = require("jsdom");
 const async = require('async');
 const chalk = require('chalk');
 const Config = require('merge-config');
+const d3 = require("d3");
 const download = require('download');
 const fs = require('fs');
 const ogr2ogr = require('ogr2ogr');
 const path = require('path');
 const program = require('commander');
 const urljoin = require('url-join');
+
+// jQuery is a bit of a hack as we need a fake 'window' object provided by jsdom.
+var document = jsdom.jsdom("<body/>");
+var window = document.defaultView;
+var $ = require('jquery')(window);
 
 // Globals
 var config = {};
@@ -36,19 +44,23 @@ program
 // Main processing function.
 function build_map(spec_file) {
   async.series({
-    build_config: function(callback) {
+    build_config: (callback) => {
       console.log(chalk.bold.cyan('Building config...'));
       build_config(callback, spec_file);
     },
-    get_data_files: function(callback) {
+    get_data_files: (callback) => {
       console.log(chalk.bold.cyan('Checking data sources...'));
       get_data_files(callback);
     },
-    filter_data: function(callback) {
+    filter_data: (callback) => {
       console.log(chalk.bold.cyan('Filtering data...'));
       filter_data(callback);
     },
-    write_to_test_site: function(callback) {
+    create_svg: (callback) => {
+      console.log(chalk.bold.cyan('Creating SVG...'));
+      create_svg(callback);
+    },
+    write_to_test_site: (callback) => {
       // @@@ Only do this with the -t flag.
       console.log(chalk.bold.cyan('Writing to test-site...'));
       write_to_test_site(callback);
@@ -121,6 +133,35 @@ function filter_data(callback) {
       data = geo_data;
       return callback(null);
     });
+}
+
+// Create the SVG file.
+function create_svg(callback) {
+  // @@@ Add this to spec file
+  var width = 1800,
+    height = 1440;
+
+  // Create an SVG element for the map.
+  var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  // @@@ TODO - get projection from spec
+  var projection = d3.geoMercator()
+    .center([15, 50])
+    .scale(1200)
+    .translate([width / 2, height / 2]);
+  var path = d3.geoPath()
+    .projection(projection);
+
+  // Add an appropriate class to each country.
+  console.log(svg);
+  console.log(svg.get());
+  $(svg).selectAll(".country")
+    .data(data.features)
+    .enter().append("path")
+    .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
+    .attr("d", path);
 }
 
 // Write data to the test-site.

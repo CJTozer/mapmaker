@@ -4,6 +4,8 @@ shape_data:
   filename: ne_10m_admin_0_map_subunits.zip
   compressed: true
 parameters:
+  projection: mercator
+  scale: 1200
   countries:
     - ALB    # Albania
     - AND    # Andorra
