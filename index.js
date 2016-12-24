@@ -2,7 +2,6 @@
 /* jshint esversion: 6 */
 "use strict";
 
-// 'Normal' imports.
 const async = require("async");
 const chalk = require("chalk");
 const Config = require("merge-config");
@@ -21,7 +20,7 @@ var config = {};
 var data = {};
 var output_exists = false;
 
-// Main entrypoint using commander - calls build_map.
+// Main entry point using commander - calls build_map.
 program
   .arguments("<spec_file>", "Config file defining the map to build.  E.g. examples/france.yaml")
   .option("-t, --test", "Copy resulting map to test server")
@@ -70,9 +69,12 @@ function build_map(spec_file) {
       }
     },
     write_to_test_site: (callback) => {
-      // @@@ Only do this with the -t flag.
-      console.log(chalk.bold.cyan("Writing to test-site..."));
-      write_to_test_site(callback);
+      if (program.test) {
+        console.log(chalk.bold.cyan("Writing to test-site..."));
+        write_to_test_site(callback);
+      } else {
+        callback(null);
+      }
     },
   }, function(err, results) {
     if (err) {
