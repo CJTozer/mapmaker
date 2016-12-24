@@ -182,7 +182,20 @@ function create_svg(callback) {
         .attr("d", path);
 
       // @@@ Sort out CSS style.
-      svg.append("style").text(".ADM0_A3-FRA {fill: #bb88bb;}");
+      // @@@ Build this from config in a separate step.
+      var css = `
+      body {
+        background-color: #DDEEFF;
+      }
+      path {
+        fill: #FFFFFF;
+        stroke: #777777;
+      }
+      .ADM0_A3-FRA {
+        fill: #bb88bb;
+      }
+      `;
+      svg.append("style").text(css);
 
       // Write SVG to the output directory.
       // Write body.html() to the SVG file as this is effectively svg.outerHTML.
