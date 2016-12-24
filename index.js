@@ -215,7 +215,8 @@ function create_svg(callback) {
       }
       path {
         fill: #FFFFFF;
-        stroke: #777777;
+        stroke: #000000;
+        stroke-width: 0.5px;
       }
       ` + css_string;
       svg.append("style").text(full_css);

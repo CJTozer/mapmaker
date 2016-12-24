@@ -6,22 +6,36 @@ shape_data:
 parameters:
   countries:
     FRA:
-      color: '#bb8800'
+      fill: '#0055A4'
     DEU:
-      color: '#454545'
+      fill: '#FFCC00'
     BEL:
+      fill: '#FF0F21'
     NLD:
+      fill: '#FA9B1E'
     LUX:
+      fill: '#00A3E0'
     AUT:
+      fill: '#FF0000'
     CHE:
+      fill: '#F00000'
     ITA:
+      fill: '#009246'
     ESP:
-    GGY:
-    JEY:
+      fill: '#AA151B'
     PRT:
+      fill: '#006600'
     GBR:
+      fill: '#002776'
+    GGY:
+      fill: '#002776'
+    JEY:
+      fill: '#002776'
     AND:
+      fill: '#FEDD00'
     LIE:
+      fill: '#002b7F'
     MCO:
-    VAT:
-    SMR:
+      fill: '#FF0000' # @@@ Check
+    VAT: # @@@ TODO
+    SMR: # @@@ TODO
