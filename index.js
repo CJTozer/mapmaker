@@ -173,6 +173,7 @@ function build_css(callback) {
     }
   });
   debug(css_string);
+  return callback(null);
 }
 
 // Create the SVG file.
@@ -253,7 +254,11 @@ function debug(tag, obj) {
     var str = chalk.bold.magenta(tag);
     str += ": ";
     // @@@ If already a string, just log it.
-    str += chalk.dim.gray(JSON.stringify(obj, undefined, 2));
+    if (typeof obj === "string") {
+      str += chalk.dim.gray(obj);
+    } else {
+      str += chalk.dim.gray(JSON.stringify(obj, undefined, 2));
+    }
     console.log(str);
   }
 }
