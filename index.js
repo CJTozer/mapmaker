@@ -2,16 +2,6 @@
 /* jshint esversion: 6 */
 "use strict";
 
-//// Steps to reproduce below.
-// (From https://bost.ocks.org/mike/map/ and https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c#.u7rhxzq3t)
-//
-// - [x] Get data from naturalearthdata
-// - [x] Filter down (and convert to JSON) using ogr2ogr
-//   - `ogr2ogr -f GeoJSON -where "ADM0_A3 IN ('GBR', 'IRL', 'FRA')" subunits.json ne_10m_admin_0_map_subunits.shp`
-// - [x] Store off the resulting JSON.
-// - [x] Copy to /test-site (boiler-plate test site)
-// - [ ] Move all the re-scaling, projections etc. into the map specfile not the HTML?
-
 // 'Normal' imports.
 const async = require("async");
 const chalk = require("chalk");
@@ -134,7 +124,7 @@ function get_data_files(callback) {
       return callback(null);
     } else {
       // Directory doesn't exist, proceed with download.
-      console.log(chalk.bold.yellow("Downloading data: ") + config.derived.download_url);
+      console.log(chalk.bold.cyan("Downloading data: ") + config.derived.download_url);
       download(config.derived.download_url, config.derived.shape_dir, {extract: true}).then(() => {
         return callback(null);
       }, (err) => {
