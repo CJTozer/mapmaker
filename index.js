@@ -18,7 +18,8 @@ const chalk = require('chalk');
 const Config = require('merge-config');
 const d3 = require("d3");
 const download = require('download');
-const fs = require('fs');
+const fs = require('fs-extra');
+const hash = require('object-hash');
 const jsdom = require("jsdom");
 const ogr2ogr = require('ogr2ogr');
 const path = require('path');
@@ -28,6 +29,7 @@ const urljoin = require('url-join');
 // Globals
 var config = {};
 var data = {};
+var output_exists = false;
 
 // Main entrypoint using commander - calls build_map.
 program
@@ -43,17 +45,39 @@ function build_map(spec_file) {
       console.log(chalk.bold.cyan('Building config...'));
       build_config(callback, spec_file);
     },
+    check_for_existing_output: (callback) => {
+      fs.access(config.derived.output_svg, (err) => {
+        if (!err) {
+          console.log(chalk.bold.green('Output already generated: ') +
+            config.derived.output_svg);
+          output_exists = true;
+        }
+        return callback(null);
+      });
+    },
     get_data_files: (callback) => {
-      console.log(chalk.bold.cyan('Checking data sources...'));
-      get_data_files(callback);
+      if (!output_exists) {
+        console.log(chalk.bold.cyan('Checking data sources...'));
+        get_data_files(callback);
+      } else {
+        return callback(null);
+      }
     },
     filter_data: (callback) => {
-      console.log(chalk.bold.cyan('Filtering data...'));
-      filter_data(callback);
+      if (!output_exists) {
+        console.log(chalk.bold.cyan('Filtering data...'));
+        filter_data(callback);
+      } else {
+        return callback(null);
+      }
     },
     create_svg: (callback) => {
-      console.log(chalk.bold.cyan('Creating SVG...'));
-      create_svg(callback);
+      if (!output_exists) {
+        console.log(chalk.bold.cyan('Creating SVG...'));
+        create_svg(callback);
+      } else {
+        return callback(null);
+      }
     },
     write_to_test_site: (callback) => {
       // @@@ Only do this with the -t flag.
@@ -64,7 +88,7 @@ function build_map(spec_file) {
     if (err) {
       console.log(chalk.bold.red('Failed!  ') + err);
     } else {
-      console.log(chalk.bold.green('Complete!') + '  Finished processing for ' + spec_file);
+      console.log(chalk.bold.green('Complete!  ') + 'Finished processing for ' + spec_file);
     }
   });
 }
@@ -90,6 +114,11 @@ function build_config(callback, spec_file) {
 
   // - Download target
   built_config.set('derived:download_url', urljoin(repo_info.base_url, shape_data.base, shape_data.filename));
+
+  // - SHA of the spec file, and output file.
+  var sha = hash(built_config.get());
+  built_config.set('derived:spec_sha1', sha);
+  built_config.set('derived:output_svg', path.join('output', sha + '.svg'));
 
   // Store off the config as a 'normal' object.
   config = built_config.get();
@@ -160,14 +189,25 @@ function create_svg(callback) {
         .enter().append("path")
         .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
         .attr("d", path);
+
+      // Write SVG to the output directory.
+      if (!fs.existsSync('output')) fs.mkdirSync('output');
+      fs.writeFile(config.derived.output_svg, svg.html(), function(err) {
+        if(err) {
+          console.log(err);
+          return callback(err);
+        }
+
+        console.log("Saved to " + config.derived.output_svg);
+        return callback(null);
+      });
     }
   );
-  return callback(null);
 }
 
 // Write data to the test-site.
 function write_to_test_site(callback) {
-  fs.writeFile('test-site/map_data.json', JSON.stringify(data), (err) => {
+  fs.copy(config.derived.output_svg, 'test-site/map_data.svg', function (err) {
     if (err) return callback(err);
     return callback(null);
   });
