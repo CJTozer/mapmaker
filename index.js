@@ -48,7 +48,7 @@ function build_map(spec_file) {
     check_for_existing_output: (callback) => {
       fs.access(config.derived.output_svg, (err) => {
         if (!err) {
-          console.log(chalk.bold.green("Output already generated: ") +
+          console.log(chalk.bold.yellow("Output already generated: ") +
             config.derived.output_svg);
           output_exists = true;
         }
@@ -128,22 +128,20 @@ function build_config(callback, spec_file) {
 // Ensure raw data is available.
 function get_data_files(callback) {
   // Get the destination and check for existing data.
-  try {
-    // No error if already present, so return empty promise.
-    fs.statSync(config.derived.shape_dir);
-    console.log(chalk.bold.yellow("Data already available: ") + config.derived.shape_dir);
-    return callback(null);
-  } catch (err) {
-    // Directory doesn't exist, proceed with download.
-    console.log(chalk.bold.yellow("Downloading data: ") + config.derived.download_url);
-
-    // Return the promise of complete downloads.
-    download(config.derived.download_url, config.derived.shape_dir, {extract: true}).then(() => {
+  fs.access(config.derived.shape_dir, (err) => {
+    if (!err) {
+      console.log(chalk.bold.yellow("Data already available: ") + config.derived.shape_dir);
       return callback(null);
-    }, (err) => {
-      return callback(err);
-    });
-  }
+    } else {
+      // Directory doesn't exist, proceed with download.
+      console.log(chalk.bold.yellow("Downloading data: ") + config.derived.download_url);
+      download(config.derived.download_url, config.derived.shape_dir, {extract: true}).then(() => {
+        return callback(null);
+      }, (err) => {
+        return callback(err);
+      });
+    }
+  });
 }
 
 // Filter data using ogr2ogr.
