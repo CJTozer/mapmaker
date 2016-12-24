@@ -24,6 +24,7 @@ var output_exists = false;
 program
   .arguments("<spec_file>", "Config file defining the map to build.  E.g. examples/france.yaml")
   .option("-t, --test", "Copy resulting map to test server")
+  .option("-f, --force", "Force map to be re-created even if nothing has changed")
   .action(build_map)
   .parse(process.argv);
 
@@ -36,7 +37,7 @@ function build_map(spec_file) {
     },
     check_for_existing_output: (callback) => {
       fs.access(config.derived.output_svg, (err) => {
-        if (!err) {
+        if (!err && !program.force) {
           console.log(chalk.bold.yellow("Output already generated: ") +
             config.derived.output_svg);
           output_exists = true;
