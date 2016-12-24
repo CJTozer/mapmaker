@@ -5,6 +5,7 @@
 const async = require("async");
 const chalk = require("chalk");
 const Config = require("merge-config");
+const css = require("node-css");
 const d3 = require("d3");
 const download = require("download");
 const fs = require("fs-extra");
@@ -19,12 +20,14 @@ const urljoin = require("url-join");
 var config = {};
 var data = {};
 var output_exists = false;
+var css_string = "";
 
 // Main entry point using commander - calls build_map.
 program
   .arguments("<spec_file>", "Config file defining the map to build.  E.g. examples/france.yaml")
   .option("-t, --test", "Copy resulting map to test server")
   .option("-f, --force", "Force map to be re-created even if nothing has changed")
+  .option("-d, --debug", "Extra debug information while building the map")
   .action(build_map)
   .parse(process.argv);
 
@@ -57,6 +60,14 @@ function build_map(spec_file) {
       if (!output_exists) {
         console.log(chalk.bold.cyan("Filtering data..."));
         filter_data(callback);
+      } else {
+        return callback(null);
+      }
+    },
+    build_css: (callback) => {
+      if (!output_exists) {
+        console.log(chalk.bold.cyan("Generating CSS..."));
+        build_css(callback);
       } else {
         return callback(null);
       }
@@ -115,6 +126,7 @@ function build_config(callback, spec_file) {
 
   // Store off the config as a 'normal' object.
   config = built_config.get();
+  debug("Config", config);
   return callback(null);
 }
 
@@ -139,7 +151,8 @@ function get_data_files(callback) {
 
 // Filter data using ogr2ogr.
 function filter_data(callback) {
-  var filter = "ADM0_A3 IN (\'" + config.parameters.countries.join("\', \'") + "\')";
+  debug("Countries config", config.parameters.countries);
+  var filter = "ADM0_A3 IN (\'" + Object.keys(config.parameters.countries).join("\', \'") + "\')";
   var ogr = ogr2ogr(config.derived.shape_file)
     .format("GeoJSON") // @@@ Get this from repo config?
     .options(["-where", filter])
@@ -148,6 +161,18 @@ function filter_data(callback) {
       data = geo_data;
       return callback(null);
     });
+}
+
+// Generate the CSS.
+function build_css(callback) {
+  var countries = config.parameters.countries;
+  Object.keys(countries).forEach((key) => {
+    var data = countries[key];
+    if (data) {
+      css_string += css(`.ADM0_A3-${key}`, data);
+    }
+  });
+  debug(css_string);
 }
 
 // Create the SVG file.
@@ -182,9 +207,8 @@ function create_svg(callback) {
         .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
         .attr("d", path);
 
-      // @@@ Sort out CSS style.
-      // @@@ Build this from config in a separate step.
-      var css = `
+      // @@@ Build these defaults from config.
+      var full_css = `
       body {
         background-color: #DDEEFF;
       }
@@ -192,11 +216,8 @@ function create_svg(callback) {
         fill: #FFFFFF;
         stroke: #777777;
       }
-      .ADM0_A3-FRA {
-        fill: #bb88bb;
-      }
-      `;
-      svg.append("style").text(css);
+      ` + css_string;
+      svg.append("style").text(full_css);
 
       // Write SVG to the output directory.
       // Write body.html() to the SVG file as this is effectively svg.outerHTML.
@@ -220,4 +241,19 @@ function write_to_test_site(callback) {
     if (err) return callback(err);
     return callback(null);
   });
+}
+
+// Debug log
+function debug(tag, obj) {
+  if (program.debug) {
+    if (!obj) {
+      obj = tag;
+      tag = "Debug:";
+    }
+    var str = chalk.bold.magenta(tag);
+    str += ": ";
+    // @@@ If already a string, just log it.
+    str += chalk.dim.gray(JSON.stringify(obj, undefined, 2));
+    console.log(str);
+  }
 }

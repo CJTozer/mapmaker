@@ -5,4 +5,23 @@ shape_data:
   compressed: true
 parameters:
   countries:
-    - FRA
+    FRA:
+      color: '#bb8800'
+    DEU:
+      color: '#454545'
+    BEL:
+    NLD:
+    LUX:
+    AUT:
+    CHE:
+    ITA:
+    ESP:
+    GGY:
+    JEY:
+    PRT:
+    GBR:
+    AND:
+    LIE:
+    MCO:
+    VAT:
+    SMR:
