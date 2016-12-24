@@ -36,6 +36,8 @@ parameters:
     LIE:
       fill: '#002b7F'
     MCO:
-      fill: '#FF0000' # @@@ Check
-    VAT: # @@@ TODO
-    SMR: # @@@ TODO
+      fill: '#CE1126'
+    VAT:
+      fill: '#FFE000'
+    SMR:
+      fill: '#66CCCC'
