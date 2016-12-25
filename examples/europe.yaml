@@ -4,60 +4,58 @@ shape_data:
   filename: ne_10m_admin_0_map_subunits.zip
   compressed: true
 parameters:
-  projection: mercator
-  scale: 1200
   countries:
-    - ALB    # Albania
-    - AND    # Andorra
-    - ARM    # Armenia
-    - AUT    # Austria
-    - AZE    # Azerbaijan
-    - BLR    # Belarus
-    - BEL    # Belgium
-    - BIH    # Bosnia and Herzegovina
-    - BGR    # Bulgaria
-    - HRV    # Croatia
-    - CYP    # Cyprus
-    - CZE    # Czech Republic
-    - DNK    # Denmark
-    - EST    # Estonia
-    - FIN    # Finland
-    - FRA    # France
-    - GEO    # Georgia
-    - DEU    # Germany
-    - GRC    # Greece
-    - HUN    # Hungary
-    - ISL    # Iceland
-    - IRL    # Ireland
-    - ITA    # Italy
-    - KAZ    # Kazakhstan
-    - KOS    # Kosovo
-    - LVA    # Latvia
-    - LIE    # Liechtenstein
-    - LTU    # Lithuania
-    - LUX    # Luxembourg
-    - MKD    # Macedonia
-    - MLT    # Malta
-    - MDA    # Moldova
-    - MCO    # Monaco
-    - MNE    # Montenegro
-    - NLD    # Netherlands
-    - NOR    # Norway
-    - POL    # Poland
-    - PRT    # Portugal
-    - ROU    # Romania
-    - RUS    # Russia
-    - SMR    # San Marino
-    - SRB    # Serbia
-    - SVK    # Slovakia
-    - SVN    # Slovenia
-    - ESP    # Spain
-    - SWE    # Sweden
-    - CHE    # Switzerland
-    - TUR    # Turkey
-    - UKR    # Ukraine
-    - GBR    # United Kingdom (UK)
-    - VAT    # Vatican City (Holy See)
+    ALB:    # Albania
+    AND:    # Andorra
+    ARM:    # Armenia
+    AUT:    # Austria
+    AZE:    # Azerbaijan
+    BLR:    # Belarus
+    BEL:    # Belgium
+    BIH:    # Bosnia and Herzegovina
+    BGR:    # Bulgaria
+    HRV:    # Croatia
+    CYP:    # Cyprus
+    CZE:    # Czech Republic
+    DNK:    # Denmark
+    EST:    # Estonia
+    FIN:    # Finland
+    FRA:    # France
+    GEO:    # Georgia
+    DEU:    # Germany
+    GRC:    # Greece
+    HUN:    # Hungary
+    ISL:    # Iceland
+    IRL:    # Ireland
+    ITA:    # Italy
+    KAZ:    # Kazakhstan
+    KOS:    # Kosovo
+    LVA:    # Latvia
+    LIE:    # Liechtenstein
+    LTU:    # Lithuania
+    LUX:    # Luxembourg
+    MKD:    # Macedonia
+    MLT:    # Malta
+    MDA:    # Moldova
+    MCO:    # Monaco
+    MNE:    # Montenegro
+    NLD:    # Netherlands
+    NOR:    # Norway
+    POL:    # Poland
+    PRT:    # Portugal
+    ROU:    # Romania
+    RUS:    # Russia
+    SMR:    # San Marino
+    SRB:    # Serbia
+    SVK:    # Slovakia
+    SVN:    # Slovenia
+    ESP:    # Spain
+    SWE:    # Sweden
+    CHE:    # Switzerland
+    TUR:    # Turkey
+    UKR:    # Ukraine
+    GBR:    # United Kingdom (UK)
+    VAT:    # Vatican City (Holy See)
     ## Channel islands not included in GBR...
-    - GGY    # Guernsey
-    - JEY    # Jersey
+    GGY:    # Guernsey
+    JEY:    # Jersey

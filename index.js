@@ -179,8 +179,8 @@ function build_css(callback) {
 // Create the SVG file.
 function create_svg(callback) {
   // @@@ Add this to spec file
-  var width = 1800,
-    height = 1440;
+  var width = config.parameters.projection.width;
+  var height = config.parameters.projection.height;
 
   // Use jsdom to create a fake DOM to work in.
   jsdom.env("<body />",
@@ -194,9 +194,10 @@ function create_svg(callback) {
         .attr("height", height);
 
       // @@@ TODO - get projection from spec
+      // @@@ TODO - get center from spec
       var projection = d3.geoMercator()
         .center([15, 50])
-        .scale(1200)
+        .scale(config.parameters.projection.scale)
         .translate([width / 2, height / 2]);
       var path = d3.geoPath()
         .projection(projection);

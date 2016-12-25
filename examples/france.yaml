@@ -4,6 +4,11 @@ shape_data:
   filename: ne_10m_admin_0_map_subunits.zip
   compressed: true
 parameters:
+  projection:
+    type: mercator
+    width: 1800
+    height: 1440
+    scale: 1800
   countries:
     FRA:
       fill: '#0055A4'
