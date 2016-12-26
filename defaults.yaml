@@ -10,3 +10,4 @@ parameters:
     width: 1800
     height: 1440
     scale: 600
+    center: [0, 0]

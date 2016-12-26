@@ -196,7 +196,7 @@ function create_svg(callback) {
       // @@@ TODO - get projection from spec
       // @@@ TODO - get center from spec
       var projection = d3.geoMercator()
-        .center([15, 50])
+        .center(config.parameters.projection.center)
         .scale(config.parameters.projection.scale)
         .translate([width / 2, height / 2]);
       var path = d3.geoPath()

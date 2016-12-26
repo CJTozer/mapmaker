@@ -4,6 +4,12 @@ shape_data:
   filename: ne_10m_admin_0_map_subunits.zip
   compressed: true
 parameters:
+  projection:
+    type: mercator
+    width: 1440
+    height: 1200
+    scale: 1200
+    center: [9, 53]
   countries:
     ALB:    # Albania
     AND:    # Andorra
@@ -59,3 +65,7 @@ parameters:
     ## Channel islands not included in GBR...
     GGY:    # Guernsey
     JEY:    # Jersey
+    ## Baikonur not included in Kazakhstan
+    KAB:    # Baikonur
+    ## North Cyprus not under the same AMD0_A3 as South...
+    CYN:    # Northern Cyprus
