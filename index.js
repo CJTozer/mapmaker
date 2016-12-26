@@ -165,6 +165,16 @@ function filter_data(callback) {
 
 // Generate the CSS.
 function build_css(callback) {
+  // Base styles.
+  var base_style = config.style;
+  Object.keys(base_style).forEach((key) => {
+    var data = base_style[key];
+    if (data) {
+      css_string += css(key, data);
+    }
+  });
+
+  // Per-country CSS.
   var countries = config.parameters.countries;
   Object.keys(countries).forEach((key) => {
     var data = countries[key];
@@ -209,18 +219,8 @@ function create_svg(callback) {
         .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
         .attr("d", path);
 
-      // @@@ Build these defaults from config.
-      var full_css = `
-      body {
-        background-color: #DDEEFF;
-      }
-      path {
-        fill: #FFFFFF;
-        stroke: #000000;
-        stroke-width: 0.5px;
-      }
-      ` + css_string;
-      svg.append("style").text(full_css);
+      // Add in the CSS style.
+      svg.append("style").text(css_string);
 
       // Write SVG to the output directory.
       // Write body.html() to the SVG file as this is effectively svg.outerHTML.

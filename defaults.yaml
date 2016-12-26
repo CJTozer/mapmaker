@@ -11,3 +11,10 @@ parameters:
     height: 1440
     scale: 600
     center: [0, 0]
+style:
+  body: # The background
+    background: '#DDEEFF' # A light sea tone
+  path: # Regions
+      fill: '#EEFFEE'
+      stroke: '#000000' # Border line colour
+      stroke-width: '0.5px' # Border line thickness
