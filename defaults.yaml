@@ -7,14 +7,14 @@ repos:
 parameters:
   projection:
     type: mercator
-    width: 1800
-    height: 1440
-    scale: 600
-    center: [0, 0]
+    width: 1580
+    height: 900
+    scale: 250
+    center: [0, 10]
 style:
-  body: # The background
+  svg: # The background
     background: '#DDEEFF' # A light sea tone
   path: # Regions
-      fill: '#EEFFEE'
-      stroke: '#000000' # Border line colour
-      stroke-width: '0.5px' # Border line thickness
+    fill: '#EEFFEE'
+    stroke: '#000000' # Border line colour
+    stroke-width: '0.5px' # Border line thickness

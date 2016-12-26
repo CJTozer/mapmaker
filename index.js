@@ -140,6 +140,7 @@ function get_data_files(callback) {
     } else {
       // Directory doesn't exist, proceed with download.
       console.log(chalk.bold.cyan("Downloading data: ") + config.derived.download_url);
+      // @@@ Get extract value from spec file...
       download(config.derived.download_url, config.derived.shape_dir, {extract: true}).then(() => {
         return callback(null);
       }, (err) => {

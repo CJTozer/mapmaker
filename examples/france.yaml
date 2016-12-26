@@ -1,14 +1,15 @@
 shape_data:
   repo: naturalearthdata
   base: 10m/cultural
-  filename: ne_10m_admin_0_map_subunits.zip
+  filename: ne_10m_admin_0_countries.zip
   compressed: true
 parameters:
   projection:
     type: mercator
-    width: 1800
-    height: 1440
-    scale: 1800
+    width: 960
+    height: 960
+    scale: 2800
+    center: [2, 46]
   countries:
     FRA:
       fill: '#0055A4'
@@ -36,6 +37,8 @@ parameters:
       fill: '#002776'
     JEY:
       fill: '#002776'
+    IRL:
+      fill: '#169B62'
     AND:
       fill: '#FEDD00'
     LIE:
