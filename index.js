@@ -189,9 +189,6 @@ function build_css(callback) {
 
 // Create the SVG file.
 function create_svg(callback) {
-  var width = config.parameters.projection.width;
-  var height = config.parameters.projection.height;
-
   // Use jsdom to create a fake DOM to work in.
   jsdom.env("<body />",
     function (err, window) {
@@ -200,14 +197,12 @@ function create_svg(callback) {
       // Create an SVG element for the map.
       var body = d3.select(window.document).select("body");
       var svg = body.append("svg")
-        .attr("width", width)
-        .attr("height", height);
+        .attr("width", config.parameters.projection.width)
+        .attr("height", config.parameters.projection.height);
 
       // @@@ TODO - get projection from spec
-      var projection = d3.geoMercator()
-        .center(config.parameters.projection.center)
-        .scale(config.parameters.projection.scale)
-        .translate([width / 2, height / 2]);
+      let {proj_err, projection} = get_projection();
+      if (proj_err) return callback(proj_err);
       var path = d3.geoPath()
         .projection(projection);
 
@@ -249,6 +244,19 @@ function write_to_test_site(callback) {
     if (err) return callback(err);
     return callback(null);
   });
+}
+
+// Get the projection from the config.
+// @@@ Move to submodule/lib?
+function get_projection() {
+  var err = null;
+  var projection = d3.geoMercator()
+    .center(config.parameters.projection.center)
+    .scale(config.parameters.projection.scale)
+    .translate([
+      config.parameters.projection.width / 2,
+      config.parameters.projection.height / 2]);
+  return {err, projection};
 }
 
 // Debug log
