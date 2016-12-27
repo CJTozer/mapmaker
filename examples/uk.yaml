@@ -1,0 +1,24 @@
+# Example using Albers projection.
+shape_data:
+  repo: naturalearthdata
+  base: 10m/cultural
+  filename: ne_10m_admin_0_map_subunits.zip
+  compressed: true
+parameters:
+  projection:
+    type: albers
+    width: 960
+    height: 1280
+    scale: 6000
+    center: [0, 57]
+  countries:
+    GBR:
+      fill: '#BBEEBB'
+    JEY:
+      fill: '#BBEEBB'
+    GGY:
+      fill: '#BBEEBB'
+    IMN:
+      fill: '#BBEEBB'
+    IRL:
+    FRA:
