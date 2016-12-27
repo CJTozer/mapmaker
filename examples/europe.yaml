@@ -62,9 +62,10 @@ parameters:
     UKR:    # Ukraine
     GBR:    # United Kingdom (UK)
     VAT:    # Vatican City (Holy See)
-    ## Channel islands not included in GBR...
+    ## Channel islands & IOM not included in GBR...
     GGY:    # Guernsey
     JEY:    # Jersey
+    IMN:    # Isle of Man
     ## Baikonur not included in Kazakhstan
     KAB:    # Baikonur
     ## North Cyprus not under the same AMD0_A3 as South...
