@@ -215,7 +215,13 @@ function create_svg(callback) {
       svg.selectAll(".country")
         .data(data.features)
         .enter().append("path")
-        .attr("class", function(d) { return "ADM0_A3-" + d.properties.ADM0_A3; })
+        .attr("class", function(d) {
+          return [
+            "ADM0_A3-" + d.properties.ADM0_A3,
+            "SU_A3-" + d.properties.SU_A3,
+            "GU_A3-" + d.properties.GU_A3,
+          ].join(" ");
+        })
         .attr("d", path);
 
       // Add in the CSS style.

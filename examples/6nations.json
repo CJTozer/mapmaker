@@ -1,0 +1,77 @@
+{
+  "comment": "Example using JSON format highlighting the 6 participants in the Rugby Union 6 Nations",
+  "shape_data": {
+    "repo": "naturalearthdata",
+    "base": "10m/cultural",
+    "filename": "ne_10m_admin_0_map_subunits.zip",
+    "compressed": true
+  },
+  "parameters": {
+    "projection": {
+      "type": "mercator",
+      "width": 960,
+      "height": 1120,
+      "scale": 1600,
+      "center": [
+        2,
+        50
+      ]
+    },
+    "countries": {
+      "FRA": {
+        "fill": "#0055A4"
+      },
+      "ITA": {
+        "fill": "#009246"
+      },
+      "IRL": null,
+      "GBR": null,
+      "DEU": null,
+      "BEL": null,
+      "NLD": null,
+      "LUX": null,
+      "AUT": null,
+      "CHE": null,
+      "ESP": null,
+      "PRT": null,
+      "GBR": null,
+      "GGY": null,
+      "JEY": null,
+      "IRL": null,
+      "AND": null,
+      "LIE": null,
+      "MCO": null,
+      "VAT": null,
+      "SMR": null,
+      "POL": null,
+      "CZE": null,
+      "SVK": null,
+      "HUN": null,
+      "SVN": null,
+      "HRV": null,
+      "BIH": null,
+      "MNE": null,
+      "SRB": null,
+      "DNK": null,
+      "NOR": null,
+      "SWE": null,
+    }
+  },
+  "style": {
+    "path.SU_A3-WLS": {
+      "fill": "#C8102E"
+    },
+    "path.SU_A3-ENG": {
+      "fill": "#FFFFFF"
+    },
+    "path.SU_A3-NIR": {
+      "fill": "#169B62"
+    },
+    "path.SU_A3-IRL": {
+      "fill": "#169B62"
+    },
+    "path.SU_A3-SCT": {
+      "fill": "#006CB4"
+    }
+  }
+}
