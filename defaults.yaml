@@ -3,7 +3,6 @@ repos:
   naturalearthdata:
     # Weird \/ here as urljoin converts '//' to '/' but that doesn't work on naturalearthdata
     base_url: http://www.naturalearthdata.com/http\//www.naturalearthdata.com/download
-# Default parameters (@@@ TODO - make this a sensible full globe).
 parameters:
   projection:
     type: mercator

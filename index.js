@@ -189,7 +189,6 @@ function build_css(callback) {
 
 // Create the SVG file.
 function create_svg(callback) {
-  // @@@ Add this to spec file
   var width = config.parameters.projection.width;
   var height = config.parameters.projection.height;
 
@@ -205,7 +204,6 @@ function create_svg(callback) {
         .attr("height", height);
 
       // @@@ TODO - get projection from spec
-      // @@@ TODO - get center from spec
       var projection = d3.geoMercator()
         .center(config.parameters.projection.center)
         .scale(config.parameters.projection.scale)
@@ -256,7 +254,6 @@ function debug(tag, obj) {
     }
     var str = chalk.bold.magenta(tag);
     str += ": ";
-    // @@@ If already a string, just log it.
     if (typeof obj === "string") {
       str += chalk.dim.gray(obj);
     } else {
