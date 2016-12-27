@@ -14,7 +14,7 @@ const jsdom = require("jsdom");
 const ogr2ogr = require("ogr2ogr");
 const path = require("path");
 const program = require("commander");
-const projections = require('./projections');
+const projections = require('./libs/projections');
 const urljoin = require("url-join");
 
 // Globals
