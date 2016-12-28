@@ -10,6 +10,7 @@ parameters:
     height: 900
     scale: 250
     center: [0, 10]
+    rotation: [0, 0]
 style:
   svg: # The background
     background: '#DDEEFF' # A light sea tone

@@ -11,6 +11,7 @@ parameters:
     height: 1280
     scale: 6000
     center: [0, 57]
+    rotation: [4.4, 0]
   countries:
     GBR:
       fill: '#BBEEBB'

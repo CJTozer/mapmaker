@@ -19,7 +19,6 @@ Projections.prototype.get_projection = function (config) {
     case "albers":
       // @@@ Get these from config?
       projection = d3.geoAlbers()
-        .rotate([4.4, 0])
         .parallels([50, 60]);
       break;
     default:
@@ -31,7 +30,8 @@ Projections.prototype.get_projection = function (config) {
       .scale(config.parameters.projection.scale)
       .translate([
         config.parameters.projection.width / 2,
-        config.parameters.projection.width / 2]);
+        config.parameters.projection.width / 2])
+      .rotate(config.parameters.projection.rotation);
   }
   return {proj_err, projection};
 };
