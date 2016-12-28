@@ -3,3 +3,5 @@
 /output
 /node_modules
 /test-site/map_data.svg
+
+npm-debug.log
