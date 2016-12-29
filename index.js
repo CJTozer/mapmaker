@@ -37,3 +37,6 @@ function build_map(spec_file) {
     });
   mapbuilder.build_map();
 }
+
+// Export the MapBuilder object.
+module.exports = MapBuilder;

@@ -120,7 +120,7 @@ MapBuilder.prototype.build_config = function (callback) {
 
   // Get the global defaults then override with the specified specification.
   var built_config = new Config();
-  built_config.file("defaults.yaml");
+  built_config.file(path.join(__dirname, "..", "..", "defaults.yaml"));
   if (self.spec_file) built_config.file(self.spec_file);
   if (self.spec_obj) built_config.merge(self.spec_obj);
 
