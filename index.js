@@ -4,19 +4,9 @@
 
 const async = require("async");
 const chalk = require("chalk");
-const Config = require("merge-config");
-const css = require("node-css");
-const d3 = require("d3");
-const download = require("download");
 const fs = require("fs-extra");
-const hash = require("object-hash");
-const jsdom = require("jsdom");
-const ogr2ogr = require("ogr2ogr");
-const path = require("path");
 const program = require("commander");
-const projections = require('./libs/projections');
 const MapBuilder = require('./libs/map-builder');
-const urljoin = require("url-join");
 
 // Main script entry point using commander - calls build_map.
 program
@@ -86,7 +76,7 @@ function build_map(spec_file) {
         callback(null);
       }
     },
-  }, function(err, results) {
+  }, function(err) {
     if (err) {
       console.log(chalk.bold.red("Failed!  ") + err);
     } else {
