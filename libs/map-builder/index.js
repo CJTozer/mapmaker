@@ -22,7 +22,7 @@ var MapBuilder = function () {
   var self = this;
   self.config = {};
   self.data = {};
-  self.spec = "";
+  self.spec_obj = {};
   self.spec_file = "";
   self.output_exists = false;
   self.css_string = "";
@@ -40,8 +40,8 @@ MapBuilder.prototype.onSuccess = function (ok_cb) {
 };
 
 // Setters for options
-MapBuilder.prototype.spec = function (spec) {
-  this.spec = spec;
+MapBuilder.prototype.spec = function (spec_obj) {
+  this.spec_obj = spec_obj;
   return this;
 };
 MapBuilder.prototype.specFile = function (spec_file) {
@@ -122,7 +122,7 @@ MapBuilder.prototype.build_config = function (callback) {
   var built_config = new Config();
   built_config.file("defaults.yaml");
   if (self.spec_file) built_config.file(self.spec_file);
-  if (self.spec) built_config.merge(self.spec);
+  if (self.spec_obj) built_config.merge(self.spec_obj);
 
   // Set up derived config values:
   // - Download dirs and shapefile name
