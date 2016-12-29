@@ -185,8 +185,7 @@ MapBuilder.prototype.filter_data = function (callback) {
       case "countries":
         if (!self.config.parameters.countries) return callback(`Cannot filter on countries with no countries specified - use "type: all"`);
         var values = Object.keys(self.config.parameters.countries).join("\', \'");
-        var filter = `${filter.key} IN (\'${values}\')`;
-        options = options.concat(["-where", filter]);
+        options = options.concat(["-where", `${filter.key} IN (\'${values}\')`]);
         break;
       case "all":
         // Include all countries - no filter
