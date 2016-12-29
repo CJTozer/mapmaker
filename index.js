@@ -18,7 +18,7 @@ const projections = require('./libs/projections');
 const urljoin = require("url-join");
 
 // Anonymous object representing the module.
-var MapMaker = function () {
+var MapBuilder = function () {
   this.config = {};
   this.data = {};
   this.output_exists = false;
@@ -36,7 +36,7 @@ program
 
 // Main processing function.
 function build_map(spec_file) {
-  var mm = new MapMaker();
+  var mm = new MapBuilder();
   async.series({
     build_config: (callback) => {
       console.log(chalk.bold.cyan("Building config..."));
@@ -102,7 +102,7 @@ function build_map(spec_file) {
 }
 
 // Build up the configuration.
-MapMaker.prototype.build_config = function (callback, spec_file) {
+MapBuilder.prototype.build_config = function (callback, spec_file) {
   // Get the global defaults then override with the specified specification.
   var built_config = new Config();
   built_config.file("defaults.yaml");
@@ -132,10 +132,10 @@ MapMaker.prototype.build_config = function (callback, spec_file) {
   this.config = built_config.get();
   debug("Config", this.config);
   return callback(null);
-}
+};
 
 // Ensure raw data is available.
-MapMaker.prototype.get_data_files = function (callback) {
+MapBuilder.prototype.get_data_files = function (callback) {
   // Get the destination and check for existing data.
   fs.access(this.config.derived.shape_dir, (err) => {
     if (!err) {
@@ -155,7 +155,7 @@ MapMaker.prototype.get_data_files = function (callback) {
 };
 
 // Filter data using ogr2ogr.
-MapMaker.prototype.filter_data = function (callback) {
+MapBuilder.prototype.filter_data = function (callback) {
   debug("Countries config", this.config.parameters.countries);
   var filter = "ADM0_A3 IN (\'" + Object.keys(this.config.parameters.countries).join("\', \'") + "\')";
   var ogr = ogr2ogr(this.config.derived.shape_file)
@@ -169,7 +169,7 @@ MapMaker.prototype.filter_data = function (callback) {
 };
 
 // Generate the CSS.
-MapMaker.prototype.build_css = function (callback) {
+MapBuilder.prototype.build_css = function (callback) {
   // Base styles.
   var base_style = this.config.style;
   Object.keys(base_style).forEach((key) => {
@@ -192,7 +192,7 @@ MapMaker.prototype.build_css = function (callback) {
 };
 
 // Create the SVG file.
-MapMaker.prototype.create_svg = function (callback) {
+MapBuilder.prototype.create_svg = function (callback) {
   // Use jsdom to create a fake DOM to work in.
   jsdom.env("<body />",
     function (err, window) {
@@ -243,7 +243,7 @@ MapMaker.prototype.create_svg = function (callback) {
 };
 
 // Write data to the test-site.
-MapMaker.prototype.write_to_test_site = function (callback) {
+MapBuilder.prototype.write_to_test_site = function (callback) {
   fs.copy(this.config.derived.output_svg, "test-site/map_data.svg", function (err) {
     if (err) return callback(err);
     return callback(null);
@@ -268,9 +268,9 @@ function debug(tag, obj) {
   }
 }
 
-MapMaker.prototype.test = function (config) {
-  console.log("MapMaker test");
+MapBuilder.prototype.test = function (config) {
+  console.log("MapBuilder test");
 };
 
 // Finally, export the object.
-module.exports = new MapMaker();
+module.exports = new MapBuilder();
