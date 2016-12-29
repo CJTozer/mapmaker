@@ -18,12 +18,12 @@ const urljoin = require("url-join");
 const utils = require('../utils');
 
 // Anonymous object representing the module.
-var MapBuilder = function (options, spec_file) {
+var MapBuilder = function () {
   var self = this;
-  self.options = options;
-  self.spec_file = spec_file;
   self.config = {};
   self.data = {};
+  self.spec = "";
+  self.spec_file = "";
   self.output_exists = false;
   self.css_string = "";
   self.svg_text = "Failed to buid SVG";
@@ -31,14 +31,26 @@ var MapBuilder = function (options, spec_file) {
 
 // Setters for error and success callbacks.
 MapBuilder.prototype.onError = function (err_cb) {
-  var self = this;
-  self.err_cb = err_cb;
-  return self;
+  this.err_cb = err_cb;
+  return this;
 };
 MapBuilder.prototype.onSuccess = function (ok_cb) {
-  var self = this;
-  self.ok_cb = ok_cb;
-  return self;
+  this.ok_cb = ok_cb;
+  return this;
+};
+
+// Setters for options
+MapBuilder.prototype.spec = function (spec) {
+  this.spec = spec;
+  return this;
+};
+MapBuilder.prototype.specFile = function (spec_file) {
+  this.spec_file = spec_file;
+  return this;
+};
+MapBuilder.prototype.force = function (force) {
+  this.force = force;
+  return this;
 };
 
 // Main function to build the map using async.
@@ -51,7 +63,7 @@ MapBuilder.prototype.build_map = function () {
     },
     check_for_existing_output: (callback) => {
       fs.readFile(self.config.derived.output_svg, function (err, data) {
-        if (!err && !self.options.force) {
+        if (!err && !self.force) {
           console.log(chalk.bold.yellow("Output already generated: ") + self.config.derived.output_svg);
           self.output_exists = true;
           self.svg_text = data;
@@ -109,7 +121,8 @@ MapBuilder.prototype.build_config = function (callback) {
   // Get the global defaults then override with the specified specification.
   var built_config = new Config();
   built_config.file("defaults.yaml");
-  built_config.file(self.spec_file);
+  if (self.spec_file) built_config.file(self.spec_file);
+  if (self.spec) built_config.merge(self.spec);
 
   // Set up derived config values:
   // - Download dirs and shapefile name

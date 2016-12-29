@@ -19,7 +19,9 @@ program
 // Main processing function.
 function build_map(spec_file) {
   if (program.debug) process.env.debug = true;
-  var mapbuilder = new MapBuilder(program, spec_file)
+  var mapbuilder = new MapBuilder()
+    .specFile(spec_file)
+    .force(program.force)
     .onError((err) => {
       console.log(chalk.bold.red(err));
     })
