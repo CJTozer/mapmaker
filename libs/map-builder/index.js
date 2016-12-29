@@ -12,7 +12,6 @@ const hash = require("object-hash");
 const jsdom = require("jsdom");
 const ogr2ogr = require("ogr2ogr");
 const path = require("path");
-const program = require("commander");
 const projections = require('../projections');
 const urljoin = require("url-join");
 const utils = require('../utils');
@@ -88,7 +87,7 @@ MapBuilder.prototype.filter_data = function (callback) {
   var self = this;
   utils.debug("Countries config", self.config.parameters.countries);
   var filter = "ADM0_A3 IN (\'" + Object.keys(self.config.parameters.countries).join("\', \'") + "\')";
-  var ogr = ogr2ogr(self.config.derived.shape_file)
+  ogr2ogr(self.config.derived.shape_file)
     .format("GeoJSON") // @@@ Get this from repo config?
     .options(["-where", filter])
     .exec(function (err, geo_data) {
@@ -181,10 +180,6 @@ MapBuilder.prototype.write_to_test_site = function (callback) {
     if (err) return callback(err);
     return callback(null);
   });
-};
-
-MapBuilder.prototype.test = function (config) {
-  console.log("MapBuilder test");
 };
 
 // Finally, export the object.
