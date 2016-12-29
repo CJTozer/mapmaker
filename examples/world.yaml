@@ -1,3 +1,4 @@
+# Example showing all the countries of the world.
 shape_data:
   repo: naturalearthdata
   base: 10m/cultural

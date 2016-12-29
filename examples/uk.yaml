@@ -1,4 +1,4 @@
-# Example using Albers projection.
+# Example using Albers projection and map_subunits data.
 shape_data:
   repo: naturalearthdata
   base: 10m/cultural
