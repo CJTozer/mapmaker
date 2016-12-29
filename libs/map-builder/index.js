@@ -123,6 +123,7 @@ MapBuilder.prototype.build_config = function (callback) {
   built_config.file(path.join(__dirname, "..", "..", "defaults.yaml"));
   if (self.spec_file) built_config.file(self.spec_file);
   if (self.spec_obj) built_config.merge(self.spec_obj);
+  utils.debug("Pure Config", self.config);
 
   // Set up derived config values:
   // - Download dirs and shapefile name
@@ -146,7 +147,7 @@ MapBuilder.prototype.build_config = function (callback) {
 
   // Store off the config as a 'normal' object.
   self.config = built_config.get();
-  utils.debug("Config", self.config);
+  utils.debug("Full Config", self.config);
   return callback(null);
 };
 
