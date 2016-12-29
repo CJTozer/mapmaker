@@ -29,6 +29,7 @@ program
 
 // Main processing function.
 function build_map(spec_file) {
+  if (program.debug) process.env.debug = true;
   var mapbuilder = new MapBuilder();
   async.series({
     build_config: (callback) => {

@@ -15,6 +15,7 @@ const path = require("path");
 const program = require("commander");
 const projections = require('../projections');
 const urljoin = require("url-join");
+const utils = require('../utils');
 
 // Anonymous object representing the module.
 var MapBuilder = function () {
@@ -56,7 +57,7 @@ MapBuilder.prototype.build_config = function (callback, spec_file) {
 
   // Store off the config as a 'normal' object.
   self.config = built_config.get();
-  debug("Config", self.config);
+  utils.debug("Config", self.config);
   return callback(null);
 };
 
@@ -85,7 +86,7 @@ MapBuilder.prototype.get_data_files = function (callback) {
 // Filter data using ogr2ogr.
 MapBuilder.prototype.filter_data = function (callback) {
   var self = this;
-  debug("Countries config", self.config.parameters.countries);
+  utils.debug("Countries config", self.config.parameters.countries);
   var filter = "ADM0_A3 IN (\'" + Object.keys(self.config.parameters.countries).join("\', \'") + "\')";
   var ogr = ogr2ogr(self.config.derived.shape_file)
     .format("GeoJSON") // @@@ Get this from repo config?
@@ -117,7 +118,7 @@ MapBuilder.prototype.build_css = function (callback) {
       self.css_string += css(`.ADM0_A3-${key}`, data);
     }
   });
-  debug(self.css_string);
+  utils.debug(self.css_string);
   return callback(null);
 };
 
@@ -181,24 +182,6 @@ MapBuilder.prototype.write_to_test_site = function (callback) {
     return callback(null);
   });
 };
-
-// Debug log
-function debug(tag, obj) {
-  if (program.debug) {
-    if (!obj) {
-      obj = tag;
-      tag = "Debug:";
-    }
-    var str = chalk.bold.magenta(tag);
-    str += ": ";
-    if (typeof obj === "string") {
-      str += chalk.dim.gray(obj);
-    } else {
-      str += chalk.dim.gray(JSON.stringify(obj, undefined, 2));
-    }
-    console.log(str);
-  }
-}
 
 MapBuilder.prototype.test = function (config) {
   console.log("MapBuilder test");
