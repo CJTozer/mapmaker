@@ -2,6 +2,7 @@
 /* jshint esversion: 6 */
 "use strict";
 
+const async = require("async");
 const chalk = require("chalk");
 const Config = require("merge-config");
 const css = require("node-css");
@@ -17,13 +18,88 @@ const urljoin = require("url-join");
 const utils = require('../utils');
 
 // Anonymous object representing the module.
-var MapBuilder = function (spec_file) {
+var MapBuilder = function (options, spec_file) {
   var self = this;
+  self.options = options;
   self.spec_file = spec_file;
   self.config = {};
   self.data = {};
   self.output_exists = false;
   self.css_string = "";
+  self.svg_text = "Failed to buid SVG";
+};
+
+// Setters for error and success callbacks.
+MapBuilder.prototype.onError = function (err_cb) {
+  var self = this;
+  self.err_cb = err_cb;
+  return self;
+};
+MapBuilder.prototype.onSuccess = function (ok_cb) {
+  var self = this;
+  self.ok_cb = ok_cb;
+  return self;
+};
+
+// Main function to build the map using async.
+MapBuilder.prototype.build_map = function () {
+  var self = this;
+  async.series({
+    build_config: (callback) => {
+      console.log(chalk.bold.cyan("Building config..."));
+      self.build_config(callback, self.spec_file);
+    },
+    check_for_existing_output: (callback) => {
+      fs.readFile(self.config.derived.output_svg, function (err, data) {
+        if (!err && !self.options.force) {
+          console.log(chalk.bold.yellow("Output already generated: ") + self.config.derived.output_svg);
+          self.output_exists = true;
+          self.svg_text = data;
+        }
+        return callback(null);
+      });
+    },
+    get_data_files: (callback) => {
+      if (!self.output_exists) {
+        console.log(chalk.bold.cyan("Checking data sources..."));
+        self.get_data_files(callback);
+      } else {
+        return callback(null);
+      }
+    },
+    filter_data: (callback) => {
+      if (!self.output_exists) {
+        console.log(chalk.bold.cyan("Filtering data..."));
+        self.filter_data(callback);
+      } else {
+        return callback(null);
+      }
+    },
+    build_css: (callback) => {
+      if (!self.output_exists) {
+        console.log(chalk.bold.cyan("Generating CSS..."));
+        self.build_css(callback);
+      } else {
+        return callback(null);
+      }
+    },
+    create_svg: (callback) => {
+      if (!self.output_exists) {
+        console.log(chalk.bold.cyan("Creating SVG..."));
+        self.create_svg(callback);
+      } else {
+        return callback(null);
+      }
+    },
+  }, function(err) {
+    if (err) {
+      console.log(chalk.bold.red("Failed!  ") + err);
+      if (self.err_cb) self.err_cb(err);
+    } else {
+      console.log(chalk.bold.green("Map Building Complete!  ") + "Finished processing for " + self.spec_file);
+      if (self.ok_cb) self.ok_cb(self.svg_text);
+    }
+  });
 };
 
 // Build up the configuration.
@@ -136,7 +212,6 @@ MapBuilder.prototype.create_svg = function (callback) {
         .attr("width", self.config.parameters.projection.width)
         .attr("height", self.config.parameters.projection.height);
 
-      // @@@ TODO - get projection from spec
       let {proj_err, projection} = projections.get_projection(self.config);
       if (proj_err) return callback(proj_err);
       var path = d3.geoPath()
@@ -161,7 +236,8 @@ MapBuilder.prototype.create_svg = function (callback) {
       // Write SVG to the output directory.
       // Write body.html() to the SVG file as this is effectively svg.outerHTML.
       if (!fs.existsSync("output")) fs.mkdirSync("output");
-      fs.writeFile(self.config.derived.output_svg, body.html(), function(err) {
+      self.svg_text = body.html();
+      fs.writeFile(self.config.derived.output_svg, self.svg_text, function(err) {
         if(err) {
           console.log(err);
           return callback(err);
@@ -172,15 +248,6 @@ MapBuilder.prototype.create_svg = function (callback) {
       });
     }
   );
-};
-
-// Write data to the test-site.
-MapBuilder.prototype.write_to_test_site = function (callback) {
-  var self = this;
-  fs.copy(self.config.derived.output_svg, "test-site/map_data.svg", function (err) {
-    if (err) return callback(err);
-    return callback(null);
-  });
 };
 
 // Finally, export the object.
