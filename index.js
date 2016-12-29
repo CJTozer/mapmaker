@@ -23,7 +23,7 @@ function build_map(spec_file) {
     .specFile(spec_file)
     .force(program.force)
     .onError((err) => {
-      console.log(chalk.bold.red(err));
+      throw new Error(err);
     })
     .onSuccess((data) => {
       if (program.test) {

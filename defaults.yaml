@@ -11,6 +11,9 @@ parameters:
     scale: 250
     center: [0, 10]
     rotation: [0, 0]
+  filter:
+    key: ADM0_A3
+    type: countries
 style:
   svg: # The background
     background: '#DDEEFF' # A light sea tone

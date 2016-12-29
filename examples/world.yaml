@@ -11,3 +11,7 @@ parameters:
     height: 960
     scale: 225
     center: [0, -10]
+  # Filter everything in.
+  filter:
+    key: ADM0_A3
+    type: all

@@ -178,9 +178,22 @@ MapBuilder.prototype.filter_data = function (callback) {
   var self = this;
   utils.debug("Countries config", self.config.parameters.countries);
   var options = [];
-  if (self.config.parameters.countries) {
-    var filter = "ADM0_A3 IN (\'" + Object.keys(self.config.parameters.countries).join("\', \'") + "\')";
-    options = options.concat(["-where", filter]);
+  utils.debug("Filter", self.config.filter);
+  var filter = self.config.parameters.filter;
+  if (filter) {
+    switch (filter.type) {
+      case "countries":
+        if (!self.config.parameters.countries) return callback(`Cannot filter on countries with no countries specified - use "type: all"`);
+        var values = Object.keys(self.config.parameters.countries).join("\', \'");
+        var filter = `${filter.key} IN (\'${values}\')`;
+        options = options.concat(["-where", filter]);
+        break;
+      case "all":
+        // Include all countries - no filter
+        break;
+      default:
+        return callback(`Unknown value for "filter": ${filter.type}`);
+    }
   }
   ogr2ogr(self.config.derived.shape_file)
     .format("GeoJSON") // @@@ Get this from repo config?
@@ -214,7 +227,7 @@ MapBuilder.prototype.build_css = function (callback) {
       }
     });
   }
-  utils.debug(self.css_string);
+  utils.debug("Generated CSS", self.css_string);
   return callback(null);
 };
 
