@@ -17,6 +17,9 @@ const program = require("commander");
 const projections = require('./libs/projections');
 const urljoin = require("url-join");
 
+// Anonymous object representing the module.
+var MapMaker = function () {};
+
 // Globals
 var config = {};
 var data = {};
@@ -264,3 +267,11 @@ function debug(tag, obj) {
     console.log(str);
   }
 }
+
+// Get the projection object from the specified config.
+MapMaker.prototype.test = function (config) {
+  console.log("MapMaker test");
+};
+
+// Finally, export the object.
+module.exports = new MapMaker();
