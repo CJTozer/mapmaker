@@ -108,7 +108,7 @@ MapBuilder.prototype.build_map = function () {
       console.log(chalk.bold.red("Failed!  ") + err);
       if (self.err_cb) self.err_cb(err);
     } else {
-      console.log(chalk.bold.green("Map Building Complete!  ") + "Finished processing for " + self.spec_file);
+      console.log(chalk.bold.green("Map Building Complete!"));
       if (self.ok_cb) self.ok_cb(self.svg_text);
     }
   });
