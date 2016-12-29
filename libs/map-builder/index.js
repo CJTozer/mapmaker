@@ -177,10 +177,14 @@ MapBuilder.prototype.get_data_files = function (callback) {
 MapBuilder.prototype.filter_data = function (callback) {
   var self = this;
   utils.debug("Countries config", self.config.parameters.countries);
-  var filter = "ADM0_A3 IN (\'" + Object.keys(self.config.parameters.countries).join("\', \'") + "\')";
+  var options = [];
+  if (self.config.parameters.countries) {
+    var filter = "ADM0_A3 IN (\'" + Object.keys(self.config.parameters.countries).join("\', \'") + "\')";
+    options = options.concat(["-where", filter]);
+  }
   ogr2ogr(self.config.derived.shape_file)
     .format("GeoJSON") // @@@ Get this from repo config?
-    .options(["-where", filter])
+    .options(options)
     .exec(function (err, geo_data) {
       if (err) return callback(err);
       self.data = geo_data;
@@ -202,12 +206,14 @@ MapBuilder.prototype.build_css = function (callback) {
 
   // Per-country CSS.
   var countries = self.config.parameters.countries;
-  Object.keys(countries).forEach((key) => {
-    var data = countries[key];
-    if (data) {
-      self.css_string += css(`.ADM0_A3-${key}`, data);
-    }
-  });
+  if (countries) {
+    Object.keys(countries).forEach((key) => {
+      var data = countries[key];
+      if (data) {
+        self.css_string += css(`.ADM0_A3-${key}`, data);
+      }
+    });
+  }
   utils.debug(self.css_string);
   return callback(null);
 };
