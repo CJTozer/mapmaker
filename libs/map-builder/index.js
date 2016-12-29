@@ -17,8 +17,9 @@ const urljoin = require("url-join");
 const utils = require('../utils');
 
 // Anonymous object representing the module.
-var MapBuilder = function () {
+var MapBuilder = function (spec_file) {
   var self = this;
+  self.spec_file = spec_file;
   self.config = {};
   self.data = {};
   self.output_exists = false;
@@ -26,13 +27,13 @@ var MapBuilder = function () {
 };
 
 // Build up the configuration.
-MapBuilder.prototype.build_config = function (callback, spec_file) {
+MapBuilder.prototype.build_config = function (callback) {
   var self = this;
 
   // Get the global defaults then override with the specified specification.
   var built_config = new Config();
   built_config.file("defaults.yaml");
-  built_config.file(spec_file);
+  built_config.file(self.spec_file);
 
   // Set up derived config values:
   // - Download dirs and shapefile name
