@@ -1,0 +1,15 @@
+shape_data:
+  repo: github
+  base: jvangeld/ME-GIS/archive
+  filename: master.zip
+  shape_filename: ME-GIS-master/Coastline2.shp
+  compressed: true
+parameters:
+  projection:
+    # Data is already in a planar format, no projection required.
+    type: none # Already planar
+    width: 1200
+    height: 900
+    scale: 250
+    center: [0, 0]
+    rotation: [0, 0]
