@@ -282,5 +282,11 @@ MapBuilder.prototype.create_svg = function (callback) {
   );
 };
 
+// Get info from the shape file.
+MapBuilder.prototype.get_shape_info = function () {
+  var self = this;
+  if (self.err_cb) self.err_cb("get_shape_info not yet implemented");
+};
+
 // Finally, export the object.
 module.exports = MapBuilder;
