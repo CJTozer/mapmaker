@@ -21,6 +21,10 @@ Projections.prototype.get_projection = function (config) {
       projection = d3.geoAlbers()
         .parallels([50, 60]);
       break;
+    case "none":
+      // Use the identity projection
+      projection = d3.geoIdentity();
+      break;
     default:
       proj_err = `Unrecognized projection "${proj_type}""`;
   }

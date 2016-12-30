@@ -3,6 +3,8 @@ repos:
   naturalearthdata:
     # Weird \/ here as urljoin converts '//' to '/' but that doesn't work on naturalearthdata
     base_url: http://www.naturalearthdata.com/http\//www.naturalearthdata.com/download
+  github:
+    base_url: http://github.com/
 parameters:
   projection:
     type: mercator
@@ -13,7 +15,7 @@ parameters:
     rotation: [0, 0]
   filter:
     key: ADM0_A3
-    type: countries
+    type: all
 style:
   svg: # The background
     background: '#DDEEFF' # A light sea tone

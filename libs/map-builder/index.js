@@ -131,7 +131,13 @@ MapBuilder.prototype.build_config = function (callback) {
   var file_base = shape_data.filename.substr(0, shape_data.filename.lastIndexOf(".")) || shape_data.filename;
   var shape_dir = path.join("data", shape_data.repo, shape_data.base, file_base);
   built_config.set("derived:shape_dir",  shape_dir);
-  built_config.set("derived:shape_file", path.join(shape_dir, file_base + ".shp"));
+  if (shape_data.shape_filename) {
+    // Use specified shape file
+    built_config.set("derived:shape_file", path.join(shape_dir, shape_data.shape_filename));
+  } else {
+    // Default to <file_base>.shp
+    built_config.set("derived:shape_file", path.join(shape_dir, file_base + ".shp"));
+  }
 
   // - Info for the current repo
   var repo_info = built_config.get("repos")[shape_data.repo];

@@ -10,7 +10,7 @@
     "preversion": "jshint index.js libs/ && npm test",
     "test": "mocha",
     "test-watch": "mocha test --watch",
-    "test-server": "http-server test-site"
+    "test-site": "http-server test-site"
   },
   "bin": {
     "mapmaker": "./index.js"
