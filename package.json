@@ -8,6 +8,7 @@
   },
   "scripts": {
     "preversion": "jshint index.js libs/ && npm test",
+    "version": "esdoc && git add docs",
     "test": "mocha",
     "test-watch": "mocha test --watch",
     "test-server": "http-server test-site"
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "esdoc": "^0.5.1",
     "jshint": "^2.9.4",
     "mocha": "^3.2.0"
   }
