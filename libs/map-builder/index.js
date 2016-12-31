@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /* jshint esversion: 6 */
 "use strict";
-
 const async = require("async");
 const chalk = require("chalk");
 const Config = require("merge-config");
@@ -17,7 +16,22 @@ const projections = require('../projections');
 const urljoin = require("url-join");
 const utils = require('../utils');
 
-// Anonymous object representing the module.
+/**
+ * MapBuilder.
+ *
+ * Class for encapsulating a map building operation.
+ * @example
+ * new MapMaker()
+ *   .spec('examples/france.yaml')
+ *   .onError((err) => {
+ *     console.log(err);
+ *   })
+ *   .onSuccess((data) => {
+ *     console.log("Success");
+ *     do_something_with_svg_data(data);
+ *   })
+ *   .build_map();
+ */
 var MapBuilder = function () {
   var self = this;
   self.config = {};
