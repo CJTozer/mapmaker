@@ -114,6 +114,33 @@ MapBuilder.prototype.build_map = function () {
   });
 };
 
+// Get info from the shape file.
+MapBuilder.prototype.get_shape_info = function () {
+  var self = this;
+  async.series({
+    build_config: (callback) => {
+      console.log(chalk.bold.cyan("Building config..."));
+      self.build_config(callback, self.spec_file);
+    },
+    get_data_files: (callback) => {
+      console.log(chalk.bold.cyan("Checking data sources..."));
+      self.get_data_files(callback);
+    },
+    get_shape_info: (callback) => {
+      console.log(chalk.bold.cyan("Getting shape info..."));
+      callback("get_shape_info not implemented yet");
+    },
+  }, function(err) {
+    if (err) {
+      console.log(chalk.bold.red("Failed!  ") + err);
+      if (self.err_cb) self.err_cb(err);
+    } else {
+      console.log(chalk.bold.green("Map Building Complete!"));
+      if (self.ok_cb) self.ok_cb(self.svg_text);
+    }
+  });
+};
+
 // Build up the configuration.
 MapBuilder.prototype.build_config = function (callback) {
   var self = this;
@@ -280,12 +307,6 @@ MapBuilder.prototype.create_svg = function (callback) {
       });
     }
   );
-};
-
-// Get info from the shape file.
-MapBuilder.prototype.get_shape_info = function () {
-  var self = this;
-  if (self.err_cb) self.err_cb("get_shape_info not yet implemented");
 };
 
 // Finally, export the object.
