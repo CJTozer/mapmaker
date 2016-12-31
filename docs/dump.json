@@ -1,0 +1,1632 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "name": "libs/map-builder/index.js",
+    "content": "#!/usr/bin/env node\r\n/* jshint esversion: 6 */\r\n\"use strict\";\r\n\r\nconst async = require(\"async\");\r\nconst chalk = require(\"chalk\");\r\nconst Config = require(\"merge-config\");\r\nconst css = require(\"node-css\");\r\nconst d3 = require(\"d3\");\r\nconst download = require(\"download\");\r\nconst fs = require(\"fs-extra\");\r\nconst hash = require(\"object-hash\");\r\nconst jsdom = require(\"jsdom\");\r\nconst ogr2ogr = require(\"ogr2ogr\");\r\nconst path = require(\"path\");\r\nconst projections = require('../projections');\r\nconst urljoin = require(\"url-join\");\r\nconst utils = require('../utils');\r\n\r\n// Anonymous object representing the module.\r\nvar MapBuilder = function () {\r\n  var self = this;\r\n  self.config = {};\r\n  self.data = {};\r\n  self.spec_obj = {};\r\n  self.spec_file = \"\";\r\n  self.output_exists = false;\r\n  self.css_string = \"\";\r\n  self.svg_text = \"Failed to buid SVG\";\r\n};\r\n\r\n// Setters for error and success callbacks.\r\nMapBuilder.prototype.onError = function (err_cb) {\r\n  this.err_cb = err_cb;\r\n  return this;\r\n};\r\nMapBuilder.prototype.onSuccess = function (ok_cb) {\r\n  this.ok_cb = ok_cb;\r\n  return this;\r\n};\r\n\r\n// Setters for options\r\nMapBuilder.prototype.spec = function (spec_obj) {\r\n  this.spec_obj = spec_obj;\r\n  return this;\r\n};\r\nMapBuilder.prototype.specFile = function (spec_file) {\r\n  this.spec_file = spec_file;\r\n  return this;\r\n};\r\nMapBuilder.prototype.force = function (force) {\r\n  this.force = force;\r\n  return this;\r\n};\r\n\r\n// Main function to build the map using async.\r\nMapBuilder.prototype.build_map = function () {\r\n  var self = this;\r\n  async.series({\r\n    build_config: (callback) => {\r\n      console.log(chalk.bold.cyan(\"Building config...\"));\r\n      self.build_config(callback, self.spec_file);\r\n    },\r\n    check_for_existing_output: (callback) => {\r\n      fs.readFile(self.config.derived.output_svg, function (err, data) {\r\n        if (!err && !self.force) {\r\n          console.log(chalk.bold.yellow(\"Output already generated: \") + self.config.derived.output_svg);\r\n          self.output_exists = true;\r\n          self.svg_text = data;\r\n        }\r\n        return callback(null);\r\n      });\r\n    },\r\n    get_data_files: (callback) => {\r\n      if (!self.output_exists) {\r\n        console.log(chalk.bold.cyan(\"Checking data sources...\"));\r\n        self.get_data_files(callback);\r\n      } else {\r\n        return callback(null);\r\n      }\r\n    },\r\n    filter_data: (callback) => {\r\n      if (!self.output_exists) {\r\n        console.log(chalk.bold.cyan(\"Filtering data...\"));\r\n        self.filter_data(callback);\r\n      } else {\r\n        return callback(null);\r\n      }\r\n    },\r\n    build_css: (callback) => {\r\n      if (!self.output_exists) {\r\n        console.log(chalk.bold.cyan(\"Generating CSS...\"));\r\n        self.build_css(callback);\r\n      } else {\r\n        return callback(null);\r\n      }\r\n    },\r\n    create_svg: (callback) => {\r\n      if (!self.output_exists) {\r\n        console.log(chalk.bold.cyan(\"Creating SVG...\"));\r\n        self.create_svg(callback);\r\n      } else {\r\n        return callback(null);\r\n      }\r\n    },\r\n  }, function(err) {\r\n    if (err) {\r\n      console.log(chalk.bold.red(\"Failed!  \") + err);\r\n      if (self.err_cb) self.err_cb(err);\r\n    } else {\r\n      console.log(chalk.bold.green(\"Map Building Complete!\"));\r\n      if (self.ok_cb) self.ok_cb(self.svg_text);\r\n    }\r\n  });\r\n};\r\n\r\n// Get info from the shape file.\r\nMapBuilder.prototype.get_shape_info = function () {\r\n  var self = this;\r\n  async.series({\r\n    build_config: (callback) => {\r\n      console.log(chalk.bold.cyan(\"Building config...\"));\r\n      self.build_config(callback, self.spec_file);\r\n    },\r\n    get_data_files: (callback) => {\r\n      console.log(chalk.bold.cyan(\"Checking data sources...\"));\r\n      self.get_data_files(callback);\r\n    },\r\n    get_shape_info: (callback) => {\r\n      console.log(chalk.bold.cyan(\"Getting shape info...\"));\r\n      callback(\"get_shape_info not implemented yet\");\r\n    },\r\n  }, function(err) {\r\n    if (err) {\r\n      console.log(chalk.bold.red(\"Failed!  \") + err);\r\n      if (self.err_cb) self.err_cb(err);\r\n    } else {\r\n      console.log(chalk.bold.green(\"Map Building Complete!\"));\r\n      if (self.ok_cb) self.ok_cb(self.svg_text);\r\n    }\r\n  });\r\n};\r\n\r\n// Build up the configuration.\r\nMapBuilder.prototype.build_config = function (callback) {\r\n  var self = this;\r\n\r\n  // Get the global defaults then override with the specified specification.\r\n  var built_config = new Config();\r\n  built_config.file(path.join(__dirname, \"..\", \"..\", \"defaults.yaml\"));\r\n  if (self.spec_file) built_config.file(self.spec_file);\r\n  if (self.spec_obj) built_config.merge(self.spec_obj);\r\n  utils.debug(\"Pure Config\", self.config);\r\n\r\n  // Set up derived config values:\r\n  // - Download dirs and shapefile name\r\n  var shape_data = built_config.get(\"shape_data\");\r\n  var file_base = shape_data.filename.substr(0, shape_data.filename.lastIndexOf(\".\")) || shape_data.filename;\r\n  var shape_dir = path.join(\"data\", shape_data.repo, shape_data.base, file_base);\r\n  built_config.set(\"derived:shape_dir\",  shape_dir);\r\n  built_config.set(\"derived:shape_file\", path.join(shape_dir, file_base + \".shp\"));\r\n\r\n  // - Info for the current repo\r\n  var repo_info = built_config.get(\"repos\")[shape_data.repo];\r\n  built_config.set(\"derived:repo_info\", repo_info);\r\n\r\n  // - Download target\r\n  built_config.set(\"derived:download_url\", urljoin(repo_info.base_url, shape_data.base, shape_data.filename));\r\n\r\n  // - SHA of the spec file, and output file.\r\n  var sha = hash(built_config.get());\r\n  built_config.set(\"derived:spec_sha1\", sha);\r\n  built_config.set(\"derived:output_svg\", path.join(\"output\", sha + \".svg\"));\r\n\r\n  // Store off the config as a 'normal' object.\r\n  self.config = built_config.get();\r\n  utils.debug(\"Full Config\", self.config);\r\n  return callback(null);\r\n};\r\n\r\n// Ensure raw data is available.\r\nMapBuilder.prototype.get_data_files = function (callback) {\r\n  var self = this;\r\n\r\n  // Get the destination and check for existing data.\r\n  fs.access(self.config.derived.shape_dir, (err) => {\r\n    if (!err) {\r\n      console.log(chalk.bold.yellow(\"Data already available: \") + self.config.derived.shape_dir);\r\n      return callback(null);\r\n    } else {\r\n      // Directory doesn't exist, proceed with download.\r\n      console.log(chalk.bold.cyan(\"Downloading data: \") + self.config.derived.download_url);\r\n      // @@@ Get extract value from spec file...\r\n      download(self.config.derived.download_url, self.config.derived.shape_dir, {extract: true}).then(() => {\r\n        return callback(null);\r\n      }, (err) => {\r\n        return callback(err);\r\n      });\r\n    }\r\n  });\r\n};\r\n\r\n// Filter data using ogr2ogr.\r\nMapBuilder.prototype.filter_data = function (callback) {\r\n  var self = this;\r\n  utils.debug(\"Countries config\", self.config.parameters.countries);\r\n  var options = [];\r\n  utils.debug(\"Filter\", self.config.filter);\r\n  var filter = self.config.parameters.filter;\r\n  if (filter) {\r\n    switch (filter.type) {\r\n      case \"countries\":\r\n        if (!self.config.parameters.countries) return callback(`Cannot filter on countries with no countries specified - use \"type: all\"`);\r\n        var values = Object.keys(self.config.parameters.countries).join(\"\\', \\'\");\r\n        options = options.concat([\"-where\", `${filter.key} IN (\\'${values}\\')`]);\r\n        break;\r\n      case \"all\":\r\n        // Include all countries - no filter\r\n        break;\r\n      default:\r\n        return callback(`Unknown value for \"filter\": ${filter.type}`);\r\n    }\r\n  }\r\n  ogr2ogr(self.config.derived.shape_file)\r\n    .format(\"GeoJSON\") // @@@ Get this from repo config?\r\n    .options(options)\r\n    .exec(function (err, geo_data) {\r\n      if (err) return callback(err);\r\n      self.data = geo_data;\r\n      return callback(null);\r\n    });\r\n};\r\n\r\n// Generate the CSS.\r\nMapBuilder.prototype.build_css = function (callback) {\r\n  var self = this;\r\n  // Base styles.\r\n  var base_style = self.config.style;\r\n  Object.keys(base_style).forEach((key) => {\r\n    var data = base_style[key];\r\n    if (data) {\r\n      self.css_string += css(key, data);\r\n    }\r\n  });\r\n\r\n  // Per-country CSS.\r\n  var countries = self.config.parameters.countries;\r\n  if (countries) {\r\n    Object.keys(countries).forEach((key) => {\r\n      var data = countries[key];\r\n      if (data) {\r\n        self.css_string += css(`.ADM0_A3-${key}`, data);\r\n      }\r\n    });\r\n  }\r\n  utils.debug(\"Generated CSS\", self.css_string);\r\n  return callback(null);\r\n};\r\n\r\n// Create the SVG file.\r\nMapBuilder.prototype.create_svg = function (callback) {\r\n  var self = this;\r\n  // Use jsdom to create a fake DOM to work in.\r\n  jsdom.env(\"<body />\",\r\n    function (err, window) {\r\n      if (err) return callback(err);\r\n\r\n      // Create an SVG element for the map.\r\n      var body = d3.select(window.document).select(\"body\");\r\n      var svg = body.append(\"svg\")\r\n        .attr(\"width\", self.config.parameters.projection.width)\r\n        .attr(\"height\", self.config.parameters.projection.height);\r\n\r\n      let {proj_err, projection} = projections.get_projection(self.config);\r\n      if (proj_err) return callback(proj_err);\r\n      var path = d3.geoPath()\r\n        .projection(projection);\r\n\r\n      // Add an appropriate class to each country.\r\n      svg.selectAll(\".country\")\r\n        .data(self.data.features)\r\n        .enter().append(\"path\")\r\n        .attr(\"class\", function(d) {\r\n          return [\r\n            \"ADM0_A3-\" + d.properties.ADM0_A3,\r\n            \"SU_A3-\" + d.properties.SU_A3,\r\n            \"GU_A3-\" + d.properties.GU_A3,\r\n          ].join(\" \");\r\n        })\r\n        .attr(\"d\", path);\r\n\r\n      // Add in the CSS style.\r\n      svg.append(\"style\").text(self.css_string);\r\n\r\n      // Write SVG to the output directory.\r\n      // Write body.html() to the SVG file as this is effectively svg.outerHTML.\r\n      if (!fs.existsSync(\"output\")) fs.mkdirSync(\"output\");\r\n      self.svg_text = body.html();\r\n      fs.writeFile(self.config.derived.output_svg, self.svg_text, function(err) {\r\n        if(err) {\r\n          console.log(err);\r\n          return callback(err);\r\n        }\r\n\r\n        console.log(\"Saved to \" + self.config.derived.output_svg);\r\n        return callback(null);\r\n      });\r\n    }\r\n  );\r\n};\r\n\r\n// Finally, export the object.\r\nmodule.exports = MapBuilder;\r\n",
+    "static": true,
+    "longname": "libs/map-builder/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 1,
+    "kind": "variable",
+    "name": "async",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~async",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 2,
+    "kind": "variable",
+    "name": "chalk",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~chalk",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 3,
+    "kind": "variable",
+    "name": "Config",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~Config",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 7,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 4,
+    "kind": "variable",
+    "name": "css",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~css",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "variable",
+    "name": "d3",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~d3",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "variable",
+    "name": "download",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~download",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 10,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 7,
+    "kind": "variable",
+    "name": "fs",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~fs",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "variable",
+    "name": "hash",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~hash",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "variable",
+    "name": "jsdom",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~jsdom",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 13,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 10,
+    "kind": "variable",
+    "name": "ogr2ogr",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~ogr2ogr",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 14,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "variable",
+    "name": "path",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~path",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 12,
+    "kind": "variable",
+    "name": "projections",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~projections",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 16,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 13,
+    "kind": "variable",
+    "name": "urljoin",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~urljoin",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 17,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 14,
+    "kind": "variable",
+    "name": "utils",
+    "memberof": "libs/map-builder/index.js",
+    "static": true,
+    "longname": "libs/map-builder/index.js~utils",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 18,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "function",
+    "name": "MapBuilder",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~MapBuilder",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 21,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": []
+  },
+  {
+    "__docId__": 16,
+    "kind": "function",
+    "name": "onError",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~onError",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 33,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "err_cb",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "function",
+    "name": "onSuccess",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~onSuccess",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 37,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "ok_cb",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 18,
+    "kind": "function",
+    "name": "spec",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~spec",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 43,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "spec_obj",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 19,
+    "kind": "function",
+    "name": "specFile",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~specFile",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 47,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "spec_file",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 20,
+    "kind": "function",
+    "name": "force",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~force",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 51,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "force",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 21,
+    "kind": "function",
+    "name": "build_map",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~build_map",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 57,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": []
+  },
+  {
+    "__docId__": 22,
+    "kind": "function",
+    "name": "get_shape_info",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~get_shape_info",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 118,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": []
+  },
+  {
+    "__docId__": 23,
+    "kind": "function",
+    "name": "build_config",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~build_config",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 145,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 24,
+    "kind": "function",
+    "name": "get_data_files",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~get_data_files",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 182,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ]
+  },
+  {
+    "__docId__": 25,
+    "kind": "function",
+    "name": "filter_data",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~filter_data",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 204,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 26,
+    "kind": "function",
+    "name": "build_css",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~build_css",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 235,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 27,
+    "kind": "function",
+    "name": "create_svg",
+    "memberof": "libs/map-builder/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/map-builder/index.js~create_svg",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/map-builder/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 261,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ]
+  },
+  {
+    "__docId__": 28,
+    "kind": "file",
+    "name": "libs/projections/index.js",
+    "content": "#!/usr/bin/env node\r\n/* jshint esversion: 6 */\r\n\"use strict\";\r\n\r\nconst d3 = require(\"d3\");\r\n\r\n// Anonymous object representing the module.\r\nvar Projections = function () {};\r\n\r\n// Get the projection object from the specified config.\r\nProjections.prototype.get_projection = function (config) {\r\n  var proj_err = null;\r\n  var projection = null;\r\n  var proj_type = config.parameters.projection.type.toLowerCase();\r\n  switch (proj_type) {\r\n    case \"mercator\":\r\n      projection = d3.geoMercator();\r\n      break;\r\n    case \"albers\":\r\n      // @@@ Get these from config?\r\n      projection = d3.geoAlbers()\r\n        .parallels([50, 60]);\r\n      break;\r\n    default:\r\n      proj_err = `Unrecognized projection \"${proj_type}\"\"`;\r\n  }\r\n  if (!proj_err) {\r\n    projection = projection\r\n      .center(config.parameters.projection.center)\r\n      .scale(config.parameters.projection.scale)\r\n      .translate([\r\n        config.parameters.projection.width / 2,\r\n        config.parameters.projection.width / 2])\r\n      .rotate(config.parameters.projection.rotation);\r\n  }\r\n  return {proj_err, projection};\r\n};\r\n\r\n// Finally, export the object.\r\nmodule.exports = new Projections();\r\n",
+    "static": true,
+    "longname": "libs/projections/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 29,
+    "kind": "variable",
+    "name": "d3",
+    "memberof": "libs/projections/index.js",
+    "static": true,
+    "longname": "libs/projections/index.js~d3",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/projections/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 30,
+    "kind": "function",
+    "name": "Projections",
+    "memberof": "libs/projections/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/projections/index.js~Projections",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/projections/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": []
+  },
+  {
+    "__docId__": 31,
+    "kind": "function",
+    "name": "get_projection",
+    "memberof": "libs/projections/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/projections/index.js~get_projection",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/projections/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "config",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "{\"proj_err\": undefined, \"projection\": undefined}"
+      ]
+    }
+  },
+  {
+    "__docId__": 32,
+    "kind": "file",
+    "name": "libs/utils/index.js",
+    "content": "#!/usr/bin/env node\r\n/* jshint esversion: 6 */\r\n\"use strict\";\r\n\r\nconst chalk = require('chalk');\r\n\r\n// Debug log\r\nfunction debug(tag, obj) {\r\n  if (process.env.debug) {\r\n    if (!obj) {\r\n      obj = tag;\r\n      tag = \"Debug:\";\r\n    }\r\n    var str = chalk.bold.magenta(tag);\r\n    str += \": \";\r\n    if (typeof obj === \"string\") {\r\n      str += chalk.dim.gray(obj);\r\n    } else {\r\n      str += chalk.dim.gray(JSON.stringify(obj, undefined, 2));\r\n    }\r\n    console.log(str);\r\n  }\r\n}\r\n\r\nmodule.exports.debug = debug;\r\n",
+    "static": true,
+    "longname": "libs/utils/index.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 33,
+    "kind": "variable",
+    "name": "chalk",
+    "memberof": "libs/utils/index.js",
+    "static": true,
+    "longname": "libs/utils/index.js~chalk",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/utils/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 34,
+    "kind": "function",
+    "name": "debug",
+    "memberof": "libs/utils/index.js",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "libs/utils/index.js~debug",
+    "access": null,
+    "export": false,
+    "importPath": "map-maker/libs/utils/index.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "unknown": [
+      {
+        "tagName": "@_undocument",
+        "tagValue": ""
+      }
+    ],
+    "params": [
+      {
+        "name": "tag",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "obj",
+        "types": [
+          "*"
+        ]
+      }
+    ]
+  },
+  {
+    "__docId__": 36,
+    "kind": "external",
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 37,
+    "kind": "external",
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 38,
+    "kind": "external",
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 39,
+    "kind": "external",
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 40,
+    "kind": "external",
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 41,
+    "kind": "external",
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 42,
+    "kind": "external",
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 43,
+    "kind": "external",
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 44,
+    "kind": "external",
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 45,
+    "kind": "external",
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 46,
+    "kind": "external",
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 47,
+    "kind": "external",
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 48,
+    "kind": "external",
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 49,
+    "kind": "external",
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 50,
+    "kind": "external",
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 51,
+    "kind": "external",
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 52,
+    "kind": "external",
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 53,
+    "kind": "external",
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 54,
+    "kind": "external",
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 55,
+    "kind": "external",
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 56,
+    "kind": "external",
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 57,
+    "kind": "external",
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 58,
+    "kind": "external",
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 59,
+    "kind": "external",
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 60,
+    "kind": "external",
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 61,
+    "kind": "external",
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 62,
+    "kind": "external",
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 63,
+    "kind": "external",
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 64,
+    "kind": "external",
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 65,
+    "kind": "external",
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 66,
+    "kind": "external",
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 67,
+    "kind": "external",
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 68,
+    "kind": "external",
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 69,
+    "kind": "external",
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 70,
+    "kind": "external",
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 71,
+    "kind": "external",
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 72,
+    "kind": "external",
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 73,
+    "kind": "external",
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 74,
+    "kind": "external",
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 75,
+    "kind": "external",
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 76,
+    "kind": "external",
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 77,
+    "kind": "external",
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 78,
+    "kind": "external",
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 79,
+    "kind": "external",
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 80,
+    "kind": "external",
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 81,
+    "kind": "external",
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 82,
+    "kind": "external",
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "lineNumber": 193,
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 84,
+    "kind": "external",
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 85,
+    "kind": "external",
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 86,
+    "kind": "external",
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 87,
+    "kind": "external",
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 88,
+    "kind": "external",
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 89,
+    "kind": "external",
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 90,
+    "kind": "external",
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 91,
+    "kind": "external",
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "static": true,
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "lineNumber": 34,
+    "builtinExternal": true
+  }
+]
