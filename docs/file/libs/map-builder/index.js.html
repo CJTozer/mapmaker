@@ -40,7 +40,6 @@
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
 /* jshint esversion: 6 */
 &quot;use strict&quot;;
-
 const async = require(&quot;async&quot;);
 const chalk = require(&quot;chalk&quot;);
 const Config = require(&quot;merge-config&quot;);
@@ -56,7 +55,22 @@ const projections = require(&apos;../projections&apos;);
 const urljoin = require(&quot;url-join&quot;);
 const utils = require(&apos;../utils&apos;);
 
-// Anonymous object representing the module.
+/**
+ * MapBuilder.
+ *
+ * Class for encapsulating a map building operation.
+ * @example
+ * new MapMaker()
+ *   .spec(&apos;examples/france.yaml&apos;)
+ *   .onError((err) =&gt; {
+ *     console.log(err);
+ *   })
+ *   .onSuccess((data) =&gt; {
+ *     console.log(&quot;Success&quot;);
+ *     do_something_with_svg_data(data);
+ *   })
+ *   .build_map();
+ */
 var MapBuilder = function () {
   var self = this;
   self.config = {};
