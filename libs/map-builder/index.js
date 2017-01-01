@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /* jshint esversion: 6 */
 "use strict";
 const async = require("async");
@@ -132,7 +133,7 @@ class MapBuilder {
         self.build_config(callback, self.spec_file);
       },
       check_for_existing_output: (callback) => {
-        fs.readFile(self.config.derived.output_svg, function (err, data) {
+        fs.readFile(self.config.derived.output_svg, function(err, data) {
           if (!err && !self.force) {
             console.log(chalk.bold.yellow("Output already generated: ") + self.config.derived.output_svg);
             self.output_exists = true;
@@ -185,8 +186,10 @@ class MapBuilder {
   }
 
   /**
-   * Get info from the shape file.
-   * @access private
+   * Print information from the shape file specified in the config.
+   *
+   * Requires {@link onError} and {@link onSuccess} specified to handle the
+   * results.
    */
   get_shape_info() {
     var self = this;
@@ -233,7 +236,7 @@ class MapBuilder {
     var shape_data = built_config.get("shape_data");
     var file_base = shape_data.filename.substr(0, shape_data.filename.lastIndexOf(".")) || shape_data.filename;
     var shape_dir = path.join("data", shape_data.repo, shape_data.base, file_base);
-    built_config.set("derived:shape_dir",  shape_dir);
+    built_config.set("derived:shape_dir", shape_dir);
     built_config.set("derived:shape_file", path.join(shape_dir, file_base + ".shp"));
 
     // - Info for the current repo
@@ -270,7 +273,9 @@ class MapBuilder {
         // Directory doesn't exist, proceed with download.
         console.log(chalk.bold.cyan("Downloading data: ") + self.config.derived.download_url);
         // @@@ Get extract value from spec file...
-        download(self.config.derived.download_url, self.config.derived.shape_dir, {extract: true}).then(() => {
+        download(self.config.derived.download_url, self.config.derived.shape_dir, {
+          extract: true
+        }).then(() => {
           return callback(null);
         }, (err) => {
           return callback(err);
@@ -292,25 +297,25 @@ class MapBuilder {
     if (filter) {
       switch (filter.type) {
         case "countries":
-        if (!self.config.parameters.countries) return callback(`Cannot filter on countries with no countries specified - use "type: all"`);
-        var values = Object.keys(self.config.parameters.countries).join("\', \'");
-        options = options.concat(["-where", `${filter.key} IN (\'${values}\')`]);
-        break;
+          if (!self.config.parameters.countries) return callback(`Cannot filter on countries with no countries specified - use "type: all"`);
+          var values = Object.keys(self.config.parameters.countries).join("\', \'");
+          options = options.concat(["-where", `${filter.key} IN (\'${values}\')`]);
+          break;
         case "all":
-        // Include all countries - no filter
-        break;
+          // Include all countries - no filter
+          break;
         default:
-        return callback(`Unknown value for "filter": ${filter.type}`);
+          return callback(`Unknown value for "filter": ${filter.type}`);
       }
     }
     ogr2ogr(self.config.derived.shape_file)
-    .format("GeoJSON") // @@@ Get this from repo config?
-    .options(options)
-    .exec(function (err, geo_data) {
-      if (err) return callback(err);
-      self.data = geo_data;
-      return callback(null);
-    });
+      .format("GeoJSON") // @@@ Get this from repo config?
+      .options(options)
+      .exec(function(err, geo_data) {
+        if (err) return callback(err);
+        self.data = geo_data;
+        return callback(null);
+      });
   }
 
   /**
@@ -350,32 +355,35 @@ class MapBuilder {
     var self = this;
     // Use jsdom to create a fake DOM to work in.
     jsdom.env("<body />",
-      function (err, window) {
+      function(err, window) {
         if (err) return callback(err);
 
         // Create an SVG element for the map.
         var body = d3.select(window.document).select("body");
         var svg = body.append("svg")
-        .attr("width", self.config.parameters.projection.width)
-        .attr("height", self.config.parameters.projection.height);
+          .attr("width", self.config.parameters.projection.width)
+          .attr("height", self.config.parameters.projection.height);
 
-        let {proj_err, projection} = projections.get_projection(self.config);
+        let {
+          proj_err,
+          projection
+        } = projections.get_projection(self.config);
         if (proj_err) return callback(proj_err);
         var path = d3.geoPath()
-        .projection(projection);
+          .projection(projection);
 
         // Add an appropriate class to each country.
         svg.selectAll(".country")
-        .data(self.data.features)
-        .enter().append("path")
-        .attr("class", function(d) {
-          return [
-            "ADM0_A3-" + d.properties.ADM0_A3,
-            "SU_A3-" + d.properties.SU_A3,
-            "GU_A3-" + d.properties.GU_A3,
-          ].join(" ");
-        })
-        .attr("d", path);
+          .data(self.data.features)
+          .enter().append("path")
+          .attr("class", function(d) {
+            return [
+              "ADM0_A3-" + d.properties.ADM0_A3,
+              "SU_A3-" + d.properties.SU_A3,
+              "GU_A3-" + d.properties.GU_A3,
+            ].join(" ");
+          })
+          .attr("d", path);
 
         // Add in the CSS style.
         svg.append("style").text(self.css_string);
@@ -385,7 +393,7 @@ class MapBuilder {
         if (!fs.existsSync("output")) fs.mkdirSync("output");
         self.svg_text = body.html();
         fs.writeFile(self.config.derived.output_svg, self.svg_text, function(err) {
-          if(err) {
+          if (err) {
             console.log(err);
             return callback(err);
           }
