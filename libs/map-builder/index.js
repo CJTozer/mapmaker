@@ -105,12 +105,13 @@ class MapBuilder {
   }
 
   /**
-   * Specify the configuration to use.
+   * Specify whether to force a rebuild.
    *
-   * May be used in conjunction with {@link spec}.  They will be merged with the
-   * spec_obj taking precedence in case of clashes.
+   * Normally maps are cached based on the specification, but if you update
+   * this module you may want to use this option to force the map to be
+   * re-created.
    *
-   * @param {string} spec_file - configuration file to use.
+   * @param {boolean} force - whether to force map re-creation.
    */
   force(force) {
     this.force = force;
