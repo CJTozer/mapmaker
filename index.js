@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /* jshint esversion: 6 */
 "use strict";
 
@@ -50,7 +51,7 @@ function build_map(spec_file) {
     .onSuccess((data) => {
       if (cmd.test) {
         console.log(chalk.bold.cyan("Writing to test-site..."));
-        fs.writeFile("test-site/map_data.svg", data, function (err) {
+        fs.writeFile("test-site/map_data.svg", data, function(err) {
           if (err) {
             console.log(chalk.bold.red(err));
           }
