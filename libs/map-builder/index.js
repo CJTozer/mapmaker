@@ -17,11 +17,9 @@ const urljoin = require("url-join");
 const utils = require('../utils');
 
 /**
- * MapBuilder.
- *
  * Class for encapsulating a map building operation.
  * @example
- * new MapMaker()
+ * new MapBuilder()
  *   .specFile('examples/france.yaml')
  *   .onError((err) => {
  *     console.log(err);
@@ -45,7 +43,7 @@ class MapBuilder {
   }
 
   /**
-   * Specify an error callback for this {MapBuilder}.
+   * Specify an error callback for this {@link MapBuilder}.
    *
    * @param {function(err: string)} err_cb - the error callback.
    */
@@ -55,30 +53,76 @@ class MapBuilder {
   }
 
   /**
-   * Specify a success callback for this {MapBuilder}.
+   * Specify a success callback for this {@link MapBuilder}.
    *
-   * @param {function(data: string)} err_cb - the success callback, passed the generated SVG as a string.
+   * @param {function(data: string)} ok_cb - the success callback, passed the generated SVG as a string.
    */
   onSuccess(ok_cb) {
     this.ok_cb = ok_cb;
     return this;
   }
 
-  // Setters for options
+  /**
+   * Specify the configuration to use.
+   *
+   * May be used in conjunction with {@link specFile}.  They will be merged with the
+   * spec_obj taking precedence in case of clashes.
+   *
+   * @param {!Object} spec_obj - object describing the configuration to use.
+   * @example
+   * var spec_obj = {
+   *   "parameters": {
+   *     "projection": {
+   *       "type": "mercator",
+   *       "width": 960,
+   *       "height": 1120,
+   *       "scale": 1600,
+   *       "center": [2, 50]
+   *     }
+   *   }
+   * }
+   * new MapBuilder()
+   *   .spec(spec_obj)
+   *   // (Register .onError and .onSuccess callbacks.)
+   *   .build_map();
+   */
   spec(spec_obj) {
     this.spec_obj = spec_obj;
     return this;
   }
+
+  /**
+   * Specify the configuration to use.
+   *
+   * May be used in conjunction with {@link spec}.  They will be merged with the
+   * spec_obj taking precedence in case of clashes.
+   *
+   * @param {string} spec_file - configuration file to use.
+   */
   specFile(spec_file) {
     this.spec_file = spec_file;
     return this;
   }
+
+  /**
+   * Specify the configuration to use.
+   *
+   * May be used in conjunction with {@link spec}.  They will be merged with the
+   * spec_obj taking precedence in case of clashes.
+   *
+   * @param {string} spec_file - configuration file to use.
+   */
   force(force) {
     this.force = force;
     return this;
   }
 
-  // Main function to build the map using async.
+  /**
+   * Asynchronously build the map.
+   *
+   * Requires {@link onError} and {@link onSuccess} specified to handle the
+   * results.
+   */
   build_map() {
     var self = this;
     async.series({
@@ -139,7 +183,10 @@ class MapBuilder {
     });
   }
 
-  // Get info from the shape file.
+  /**
+   * Get info from the shape file.
+   * @access private
+   */
   get_shape_info() {
     var self = this;
     async.series({
@@ -166,7 +213,10 @@ class MapBuilder {
     });
   }
 
-  // Build up the configuration.
+  /**
+   * Build up the configuration.
+   * @access private
+   */
   build_config(callback) {
     var self = this;
 
@@ -203,7 +253,10 @@ class MapBuilder {
     return callback(null);
   }
 
-  // Ensure raw data is available.
+  /**
+   * Ensure raw data is available.
+   * @access private
+   */
   get_data_files(callback) {
     var self = this;
 
@@ -225,7 +278,10 @@ class MapBuilder {
     });
   }
 
-  // Filter data using ogr2ogr.
+  /**
+   * Filter data using ogr2ogr.
+   * @access private
+   */
   filter_data(callback) {
     var self = this;
     utils.debug("Countries config", self.config.parameters.countries);
@@ -256,7 +312,10 @@ class MapBuilder {
     });
   }
 
-  // Generate the CSS.
+  /**
+   * Generate the CSS.
+   * @access private
+   */
   build_css(callback) {
     var self = this;
     // Base styles.
@@ -282,7 +341,10 @@ class MapBuilder {
     return callback(null);
   }
 
-  // Create the SVG file.
+  /**
+   * Create the SVG file.
+   * @access private
+   */
   create_svg(callback) {
     var self = this;
     // Use jsdom to create a fake DOM to work in.
@@ -335,5 +397,5 @@ class MapBuilder {
   }
 }
 
-// Finally, export the object.
+// Export the MapBuilder class.
 module.exports = MapBuilder;
