@@ -1,61 +1,12 @@
 {
-  "coverage": "2.7%",
-  "expectCount": 37,
+  "coverage": "100%",
+  "expectCount": 1,
   "actualCount": 1,
   "files": {
     "libs/map-builder/index.js": {
-      "expectCount": 32,
+      "expectCount": 1,
       "actualCount": 1,
-      "undocumentLines": [
-        6,
-        4,
-        160,
-        250,
-        72,
-        5,
-        36,
-        276,
-        7,
-        8,
-        9,
-        49,
-        219,
-        66,
-        10,
-        197,
-        133,
-        11,
-        12,
-        13,
-        53,
-        48,
-        52,
-        14,
-        15,
-        58,
-        62,
-        63,
-        59,
-        16,
-        17
-      ]
-    },
-    "libs/projections/index.js": {
-      "expectCount": 3,
-      "actualCount": 0,
-      "undocumentLines": [
-        8,
-        5,
-        11
-      ]
-    },
-    "libs/utils/index.js": {
-      "expectCount": 2,
-      "actualCount": 0,
-      "undocumentLines": [
-        5,
-        8
-      ]
+      "undocumentLines": []
     }
   }
 }
