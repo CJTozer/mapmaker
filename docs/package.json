@@ -1,6 +1,6 @@
 {
   "name": "map-maker",
-  "version": "0.2.2-3",
+  "version": "0.2.2-4",
   "description": "Tool for building maps",
   "main": "index.js",
   "directories": {
