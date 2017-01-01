@@ -22,7 +22,7 @@ const utils = require('../utils');
  * Class for encapsulating a map building operation.
  * @example
  * new MapMaker()
- *   .spec('examples/france.yaml')
+ *   .specFile('examples/france.yaml')
  *   .onError((err) => {
  *     console.log(err);
  *   })
@@ -44,11 +44,21 @@ class MapBuilder {
     self.svg_text = "Failed to buid SVG";
   }
 
-  // Setters for error and success callbacks.
+  /**
+   * Specify an error callback for this {MapBuilder}.
+   *
+   * @param {function(err: string)} err_cb - the error callback.
+   */
   onError(err_cb) {
     this.err_cb = err_cb;
     return this;
   }
+
+  /**
+   * Specify a success callback for this {MapBuilder}.
+   *
+   * @param {function(data: string)} err_cb - the success callback, passed the generated SVG as a string.
+   */
   onSuccess(ok_cb) {
     this.ok_cb = ok_cb;
     return this;
