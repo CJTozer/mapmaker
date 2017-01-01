@@ -342,6 +342,18 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "libs/map-builder/index.js~mapbuilder#build_map",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-build_map",
+    "libs/map-builder/index.js~MapBuilder#build_map",
+    "method"
+  ],
+  [
+    "libs/map-builder/index.js~mapbuilder#force",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-force",
+    "libs/map-builder/index.js~MapBuilder#force",
+    "method"
+  ],
+  [
     "libs/map-builder/index.js~mapbuilder#onerror",
     "class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError",
     "libs/map-builder/index.js~MapBuilder#onError",
@@ -351,6 +363,18 @@ window.esdocSearchIndex = [
     "libs/map-builder/index.js~mapbuilder#onsuccess",
     "class/libs/map-builder/index.js~MapBuilder.html#instance-method-onSuccess",
     "libs/map-builder/index.js~MapBuilder#onSuccess",
+    "method"
+  ],
+  [
+    "libs/map-builder/index.js~mapbuilder#spec",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-spec",
+    "libs/map-builder/index.js~MapBuilder#spec",
+    "method"
+  ],
+  [
+    "libs/map-builder/index.js~mapbuilder#specfile",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-specFile",
+    "libs/map-builder/index.js~MapBuilder#specFile",
     "method"
   ],
   [

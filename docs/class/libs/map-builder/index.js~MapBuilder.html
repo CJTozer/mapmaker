@@ -44,7 +44,7 @@
   
   
   
-  <span data-ice="source">| <span><a href="file/libs/map-builder/index.js.html#lineNumber35">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/libs/map-builder/index.js.html#lineNumber33">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -64,8 +64,7 @@
 
   
   
-  <div class="description" data-ice="description"><p>MapBuilder.</p>
-<p>Class for encapsulating a map building operation.</p>
+  <div class="description" data-ice="description"><p>Class for encapsulating a map building operation.</p>
 </div>
   
 
@@ -76,7 +75,7 @@
     
   <div class="example-doc" data-ice="exampleDoc">
       
-      <pre class="prettyprint source-code"><code data-ice="exampleCode">new MapMaker()
+      <pre class="prettyprint source-code"><code data-ice="exampleCode">new MapBuilder()
   .specFile(&apos;examples/france.yaml&apos;)
   .onError((err) =&gt; {
     console.log(err);
@@ -115,13 +114,13 @@
         <p>
           
           
-          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError">onError</a></span></span><span data-ice="signature">(err_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(err: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-build_map">build_map</a></span></span><span data-ice="signature">()</span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Specify an error callback for this {MapBuilder}.</p>
+        <div data-ice="description"><p>Asynchronously build the map.</p>
 </div>
       </div>
     </td>
@@ -143,13 +142,125 @@
         <p>
           
           
-          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onSuccess">onSuccess</a></span></span><span data-ice="signature">(err_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(data: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-force">force</a></span></span><span data-ice="signature">(spec_file: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Specify a success callback for this {MapBuilder}.</p>
+        <div data-ice="description"><p>Specify the configuration to use.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError">onError</a></span></span><span data-ice="signature">(err_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(err: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Specify an error callback for this <span><a href="class/libs/map-builder/index.js~MapBuilder.html">MapBuilder</a></span>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onSuccess">onSuccess</a></span></span><span data-ice="signature">(ok_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(data: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Specify a success callback for this <span><a href="class/libs/map-builder/index.js~MapBuilder.html">MapBuilder</a></span>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-spec">spec</a></span></span><span data-ice="signature">(spec_obj: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>): <span>*</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Specify the configuration to use.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          <span data-ice="name"><span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-specFile">specFile</a></span></span><span data-ice="signature">(spec_file: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Specify the configuration to use.</p>
 </div>
       </div>
     </td>
@@ -171,6 +282,127 @@
 <div data-ice="methodDetails"><h2 data-ice="title">Public Methods</h2>
 
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-build_map">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span data-ice="name">build_map</span><span data-ice="signature">()</span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber126">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Asynchronously build the map.</p>
+<p>Requires <span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError">onError</a></span> and <span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-onSuccess">onSuccess</a></span> specified to handle the
+results.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-force">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span data-ice="name">force</span><span data-ice="signature">(spec_file: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber115">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Specify the configuration to use.</p>
+<p>May be used in conjunction with <span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-spec">spec</a></span>.  They will be merged with the
+spec_obj taking precedence in case of clashes.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" data-depth="0">spec_file</td>
+      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>configuration file to use.</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  <div class="return-params" data-ice="returnParams">
+    <h4>Return:</h4>
+    <table>
+      <tbody>
+        <tr>
+          <td class="return-type" data-ice="returnType"><span>*</span></td>
+          
+        </tr>
+      </tbody>
+    </table>
+    <div data-ice="returnProperties">
+</div>
+  </div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-method-onError">
     <span class="access" data-ice="access">public</span>
     
@@ -182,14 +414,14 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber52">source</a></span></span>
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber50">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Specify an error callback for this {MapBuilder}.</p>
+  <div data-ice="description"><p>Specify an error callback for this <span><a href="class/libs/map-builder/index.js~MapBuilder.html">MapBuilder</a></span>.</p>
 </div>
 
   
@@ -251,18 +483,18 @@
     
     
     
-    <span data-ice="name">onSuccess</span><span data-ice="signature">(err_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(data: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
+    <span data-ice="name">onSuccess</span><span data-ice="signature">(ok_cb: <span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(data: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span>): <span>*</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber62">source</a></span></span>
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber60">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Specify a success callback for this {MapBuilder}.</p>
+  <div data-ice="description"><p>Specify a success callback for this <span><a href="class/libs/map-builder/index.js~MapBuilder.html">MapBuilder</a></span>.</p>
 </div>
 
   
@@ -276,10 +508,181 @@
     <tbody>
     
     <tr data-ice="property" data-depth="0">
-      <td data-ice="name" data-depth="0">err_cb</td>
+      <td data-ice="name" data-depth="0">ok_cb</td>
       <td data-ice="type"><span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">function</a></span><span>(data: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>)</span></span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>the success callback, passed the generated SVG as a string.</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  <div class="return-params" data-ice="returnParams">
+    <h4>Return:</h4>
+    <table>
+      <tbody>
+        <tr>
+          <td class="return-type" data-ice="returnType"><span>*</span></td>
+          
+        </tr>
+      </tbody>
+    </table>
+    <div data-ice="returnProperties">
+</div>
+  </div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-spec">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span data-ice="name">spec</span><span data-ice="signature">(spec_obj: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span>): <span>*</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber89">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Specify the configuration to use.</p>
+<p>May be used in conjunction with <span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-specFile">specFile</a></span>.  They will be merged with the
+spec_obj taking precedence in case of clashes.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" data-depth="0">spec_obj</td>
+      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span></td>
+      <td data-ice="appendix"><ul><li>nullable: false</li></ul></td>
+      <td data-ice="description"><p>object describing the configuration to use.</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  <div class="return-params" data-ice="returnParams">
+    <h4>Return:</h4>
+    <table>
+      <tbody>
+        <tr>
+          <td class="return-type" data-ice="returnType"><span>*</span></td>
+          
+        </tr>
+      </tbody>
+    </table>
+    <div data-ice="returnProperties">
+</div>
+  </div>
+
+  
+
+  
+
+  
+
+  
+
+  <div data-ice="example">
+    <h4>Example:</h4>
+    
+  <div class="example-doc" data-ice="exampleDoc">
+      
+      <pre class="prettyprint source-code"><code data-ice="exampleCode">var spec_obj = {
+  &quot;parameters&quot;: {
+    &quot;projection&quot;: {
+      &quot;type&quot;: &quot;mercator&quot;,
+      &quot;width&quot;: 960,
+      &quot;height&quot;: 1120,
+      &quot;scale&quot;: 1600,
+      &quot;center&quot;: [2, 50]
+    }
+  }
+}
+new MapBuilder()
+  .spec(spec_obj)
+  // (Register .onError and .onSuccess callbacks.)
+  .build_map();</code></pre>
+    </div>
+</div>
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-specFile">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span data-ice="name">specFile</span><span data-ice="signature">(spec_file: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span>*</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/libs/map-builder/index.js.html#lineNumber102">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Specify the configuration to use.</p>
+<p>May be used in conjunction with <span><a href="class/libs/map-builder/index.js~MapBuilder.html#instance-method-spec">spec</a></span>.  They will be merged with the
+spec_obj taking precedence in case of clashes.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" data-depth="0">spec_file</td>
+      <td data-ice="type"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>configuration file to use.</p>
 </td>
     </tr>
 </tbody>
