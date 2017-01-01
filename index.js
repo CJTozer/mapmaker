@@ -28,6 +28,11 @@ program
   // @@@ Option to list specific keys only (or to get a list of valid keys - no values?).
   .action(list_shape_info);
 
+// Catch-all for unrecognized sub-command (so show help).
+program
+  .command('')
+  .action(program.outputHelp());
+
 // Kick off the program.
 program.parse(process.argv);
 
