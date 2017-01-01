@@ -342,6 +342,18 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "libs/map-builder/index.js~mapbuilder#onerror",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError",
+    "libs/map-builder/index.js~MapBuilder#onError",
+    "method"
+  ],
+  [
+    "libs/map-builder/index.js~mapbuilder#onsuccess",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-onSuccess",
+    "libs/map-builder/index.js~MapBuilder#onSuccess",
+    "method"
+  ],
+  [
     "libs/projections/index.js",
     "file/libs/projections/index.js.html",
     "libs/projections/index.js",
