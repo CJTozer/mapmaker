@@ -1,4 +1,5 @@
 {
   "source": "libs",
-  "destination": "./docs"
+  "destination": "./docs",
+  "unexportIdentifier": true
 }
