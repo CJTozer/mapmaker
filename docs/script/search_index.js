@@ -354,6 +354,12 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "libs/map-builder/index.js~mapbuilder#get_shape_info",
+    "class/libs/map-builder/index.js~MapBuilder.html#instance-method-get_shape_info",
+    "libs/map-builder/index.js~MapBuilder#get_shape_info",
+    "method"
+  ],
+  [
     "libs/map-builder/index.js~mapbuilder#onerror",
     "class/libs/map-builder/index.js~MapBuilder.html#instance-method-onError",
     "libs/map-builder/index.js~MapBuilder#onError",

@@ -1,11 +1,11 @@
 {
   "coverage": "100%",
-  "expectCount": 7,
-  "actualCount": 7,
+  "expectCount": 8,
+  "actualCount": 8,
   "files": {
     "libs/map-builder/index.js": {
-      "expectCount": 7,
-      "actualCount": 7,
+      "expectCount": 8,
+      "actualCount": 8,
       "undocumentLines": []
     }
   }
