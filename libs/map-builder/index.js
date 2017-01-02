@@ -40,7 +40,7 @@ class MapBuilder {
     self.spec_file = "";
     self.output_exists = false;
     self.css_string = "";
-    self.svg_text = "Failed to buid SVG";
+    self.svg_text = "Failed to build SVG";
   }
 
   /**
@@ -204,7 +204,13 @@ class MapBuilder {
       },
       get_shape_info: (callback) => {
         console.log(chalk.bold.cyan("Getting shape info..."));
-        callback("get_shape_info not implemented yet");
+        ogr2ogr(self.config.derived.shape_file)
+          .format("GeoJSON") // @@@ Get this from repo config?
+          .exec(function(err, geo_data) {
+            if (err) return callback(err);
+            self.data = geo_data;
+            return callback(null);
+          });
       },
     }, function(err) {
       if (err) {
@@ -212,7 +218,7 @@ class MapBuilder {
         if (self.err_cb) self.err_cb(err);
       } else {
         console.log(chalk.bold.green("Map Building Complete!"));
-        if (self.ok_cb) self.ok_cb(self.svg_text);
+        if (self.ok_cb) self.ok_cb(self.data);
       }
     });
   }

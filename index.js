@@ -31,8 +31,12 @@ program
 
 // Catch-all for unrecognized sub-command (so show help).
 program
-  .command('')
-  .action(program.outputHelp());
+  .command('*', null, {
+    noHelp: true
+  })
+  .action(() => {
+    program.outputHelp();
+  });
 
 // Kick off the program.
 program.parse(process.argv);
@@ -73,7 +77,10 @@ function list_shape_info(spec_file) {
     })
     .onSuccess((data) => {
       // @@@ Tabulate in some way, ideally.
-      console.log(data);
+      for (let feature of data.features) {
+        console.log(feature.properties.NAME_LONG);
+      }
+      console.log(data.features[0]);
     });
   mapbuilder.get_shape_info();
 }
