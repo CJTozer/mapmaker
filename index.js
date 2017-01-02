@@ -6,6 +6,7 @@
 const chalk = require("chalk");
 const fs = require("fs-extra");
 const program = require("commander");
+const tabula = require('tabula');
 const MapBuilder = require('./libs/map-builder');
 
 // Global options.
@@ -76,11 +77,22 @@ function list_shape_info(spec_file) {
       throw new Error(err);
     })
     .onSuccess((data) => {
-      // @@@ Tabulate in some way, ideally.
-      for (let feature of data.features) {
-        console.log(feature.properties.NAME_LONG);
-      }
-      console.log(data.features[0]);
+      // Tabulate the data.
+      var shape_elements = data.features.map((x) => {
+        return x.properties;
+      });
+      tabula(shape_elements, {
+        // @@@ Get columns from a command option.
+        columns: [{
+          lookup: 'NAME_LONG',
+          name: chalk.bold.magenta('Name')
+        }, {
+          lookup: 'ADM0_A3',
+          name: chalk.bold.magenta('ADM0_A3')
+        }]
+      });
+      // @@@ Option to just list keys.
+      // console.log(data.features[0]);
     });
   mapbuilder.get_shape_info();
 }

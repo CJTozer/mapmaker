@@ -204,6 +204,7 @@ class MapBuilder {
       },
       get_shape_info: (callback) => {
         console.log(chalk.bold.cyan("Getting shape info..."));
+        // @@@ Option to apply filter first.
         ogr2ogr(self.config.derived.shape_file)
           .format("GeoJSON") // @@@ Get this from repo config?
           .exec(function(err, geo_data) {
@@ -217,7 +218,7 @@ class MapBuilder {
         console.log(chalk.bold.red("Failed!  ") + err);
         if (self.err_cb) self.err_cb(err);
       } else {
-        console.log(chalk.bold.green("Map Building Complete!"));
+        console.log(chalk.bold.green("Parsed shape info!"));
         if (self.ok_cb) self.ok_cb(self.data);
       }
     });
