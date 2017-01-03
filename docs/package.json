@@ -9,8 +9,8 @@
   "scripts": {
     "preversion": "jshint index.js libs/ && npm test",
     "version": "esdoc && git add docs",
+    "lint": "grunt prerelease",
     "test": "mocha",
-    "test-watch": "mocha test --watch",
     "test-server": "http-server test-site"
   },
   "bin": {

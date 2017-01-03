@@ -7,10 +7,9 @@
     "example": "examples"
   },
   "scripts": {
-    "preversion": "jshint index.js libs/ && npm test",
-    "version": "esdoc && git add docs",
-    "test": "mocha",
-    "test-watch": "mocha test --watch",
+    "preversion": "grunt lint",
+    "version": "grunt docs-add",
+    "test": "grunt test",
     "test-server": "http-server test-site"
   },
   "bin": {

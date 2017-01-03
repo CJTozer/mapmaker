@@ -40,9 +40,9 @@ module.exports = function( grunt ) {
       },
     },
     gitadd: {
-      task: {
+      docs: {
         files: {
-          src: [ '.' ],
+          src: [ 'docs' ],
         },
       },
     },
@@ -58,6 +58,6 @@ module.exports = function( grunt ) {
 
   grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
   grunt.registerTask( 'doc', 'esdoc' );
+  grunt.registerTask( 'docs-add', [ 'doc', 'gitadd:docs' ] );
   grunt.registerTask( 'test', 'mochaTest' );
-  grunt.registerTask( 'prerelease', [ 'lint', 'test', 'doc', 'gitadd' ] );
 };
