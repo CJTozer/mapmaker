@@ -31,14 +31,25 @@ module.exports = function( grunt ) {
         },
       },
     },
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec',
+          quiet: true,
+        },
+        src: [ 'test/**/*.js' ],
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
   grunt.loadNpmTasks( 'grunt-contrib-jshint' );
   grunt.loadNpmTasks( 'grunt-esdoc' );
+  grunt.loadNpmTasks( 'grunt-mocha-test' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
   grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
   grunt.registerTask( 'doc', [ 'esdoc' ] );
+  grunt.registerTask( 'test', 'mochaTest' );
 };
