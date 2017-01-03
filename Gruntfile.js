@@ -35,7 +35,6 @@ module.exports = function( grunt ) {
       test: {
         options: {
           reporter: 'spec',
-          quiet: true,
         },
         src: [ 'test/**/*.js' ],
       },
@@ -50,6 +49,7 @@ module.exports = function( grunt ) {
   grunt.registerTask( 'default', [ 'lint' ] );
 
   grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
-  grunt.registerTask( 'doc', [ 'esdoc' ] );
+  grunt.registerTask( 'doc', 'esdoc' );
   grunt.registerTask( 'test', 'mochaTest' );
+  grunt.registerTask( 'prerelease', [ 'lint', 'test' ] );
 };
