@@ -47,6 +47,9 @@
     "esdoc": "^0.5.1",
     "eslint": "^3.12.2",
     "eslint-config-idiomatic": "^2.1.0",
+    "grunt": "^1.0.1",
+    "grunt-esdoc": "0.0.4",
+    "gruntify-eslint": "^3.1.0",
     "jshint": "^2.9.4",
     "mocha": "^3.2.0"
   }
