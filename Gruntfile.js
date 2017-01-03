@@ -39,17 +39,25 @@ module.exports = function( grunt ) {
         src: [ 'test/**/*.js' ],
       },
     },
+    gitadd: {
+      task: {
+        files: {
+          src: [ '.' ],
+        },
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
   grunt.loadNpmTasks( 'grunt-contrib-jshint' );
   grunt.loadNpmTasks( 'grunt-esdoc' );
   grunt.loadNpmTasks( 'grunt-mocha-test' );
+  grunt.loadNpmTasks( 'grunt-git' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
   grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
   grunt.registerTask( 'doc', 'esdoc' );
   grunt.registerTask( 'test', 'mochaTest' );
-  grunt.registerTask( 'prerelease', [ 'lint', 'test' ] );
+  grunt.registerTask( 'prerelease', [ 'lint', 'test', 'doc', 'gitadd' ] );
 };
