@@ -12,6 +12,18 @@ module.exports = function( grunt ) {
       },
       src: [ '.' ],
     },
+    jshint: {
+      allFiles: [
+        'index.js',
+        'Gruntfile.js',
+        'libs/**/*.js',
+        'test/**/*.js',
+      ],
+      options: {
+        reporter: require( 'jshint-stylish' ),
+        jshintrc: '.jshintrc',
+      },
+    },
     esdoc: {
       dist: {
         options: {
@@ -22,10 +34,11 @@ module.exports = function( grunt ) {
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
+  grunt.loadNpmTasks( 'grunt-contrib-jshint' );
   grunt.loadNpmTasks( 'grunt-esdoc' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
-  grunt.registerTask( 'lint', [ 'eslint' ] );
+  grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
   grunt.registerTask( 'doc', [ 'esdoc' ] );
 };
