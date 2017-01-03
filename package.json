@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preversion": "grunt lint",
-    "version": "grunt docs-add",
+    "version": "grunt docs-add && git add -u",
     "test": "grunt test",
     "test-server": "http-server test-site"
   },

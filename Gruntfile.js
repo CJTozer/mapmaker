@@ -40,9 +40,9 @@ module.exports = function( grunt ) {
       },
     },
     gitadd: {
-      docs: {
+      task: {
         files: {
-          src: [ 'docs' ],
+          src: [ 'docs/' ],
         },
       },
     },
