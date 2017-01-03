@@ -12,9 +12,20 @@ module.exports = function( grunt ) {
       },
       src: [ '.' ],
     },
+    esdoc: {
+      dist: {
+        options: {
+          config: '.esdoc.json',
+        },
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
+  grunt.loadNpmTasks( 'grunt-esdoc' );
+
   grunt.registerTask( 'default', [ 'lint' ] );
+
   grunt.registerTask( 'lint', [ 'eslint' ] );
+  grunt.registerTask( 'doc', [ 'esdoc' ] );
 };
