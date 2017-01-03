@@ -3,11 +3,12 @@
 /* jshint esversion: 6 */
 'use strict';
 
-const chalk = require( 'chalk' );
-const fs = require( 'fs-extra' );
-const program = require( 'commander' );
-const tabula = require( 'tabula' );
-const MapBuilder = require( './libs/map-builder' );
+const
+  chalk = require( 'chalk' ),
+  fs = require( 'fs-extra' ),
+  program = require( 'commander' ),
+  tabula = require( 'tabula' ),
+  MapBuilder = require( './libs/map-builder' );
 
 // Global options.
 program
@@ -44,12 +45,15 @@ program.parse( process.argv );
 
 // Main map building function.
 function build_map( spec_file ) {
-  /* jshint validthis: true */
-  var cmd = this;
+  /* jshint validthis:true */
+  var
+    cmd = this,
+    mapbuilder;
+
   if ( program.debug ) {
     process.env.debug = true;
   }
-  var mapbuilder = new MapBuilder()
+  mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .force( cmd.force )
     .onError( ( err ) => {
@@ -70,12 +74,12 @@ function build_map( spec_file ) {
 
 // Handy function for listing shape file data.
 function list_shape_info( spec_file ) {
-  /* jshint validthis: true */
   // var cmd = this;
+  var mapbuilder;
   if ( program.debug ) {
     process.env.debug = true;
   }
-  var mapbuilder = new MapBuilder()
+  mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .onError( ( err ) => {
       throw new Error( err );

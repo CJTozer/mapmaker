@@ -7,12 +7,14 @@ const chalk = require( 'chalk' );
 
 // Debug log
 function debug( tag, obj ) {
+  var
+    str;
   if ( process.env.debug ) {
     if ( !obj ) {
       obj = tag;
       tag = 'Debug:';
     }
-    var str = chalk.bold.magenta( tag );
+    str = chalk.bold.magenta( tag );
     str += ': ';
     if ( typeof obj === 'string' ) {
       str += chalk.dim.gray( obj );

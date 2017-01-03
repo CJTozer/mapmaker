@@ -3,27 +3,31 @@
 /* jshint esversion: 6 */
 'use strict';
 
-const chai = require( 'chai' );
-const assert = chai.assert;
-const fs = require( 'fs' );
-const path = require( 'path' );
+const
+  chai = require( 'chai' ),
+  assert = chai.assert,
+  fs = require( 'fs' ),
+  path = require( 'path' ),
+  MapMaker = require( '../index.js' );
 
-const MapMaker = require( '../index.js' );
-
+/* global describe, it */
 describe( 'ExampleGeneration', function() {
+  var
+    files,
+    spec_file;
   // Increase timeout - when running on a fresh system, downloads are required.
   this.timeout( 180000 );
-  var files = fs.readdirSync( './examples' );
+  files = fs.readdirSync( './examples' );
   files.forEach( function( file ) {
     it( `Generate example map from ${file}`, function( done ) {
-      var spec_file = path.join( './examples', file );
+      spec_file = path.join( './examples', file );
       new MapMaker()
         .specFile( spec_file )
         .onError( ( err ) => {
           done( err );
         } )
         .onSuccess( ( data ) => {
-          // assert.equal("+++", "---");
+          assert.isAbove( data.length(), 0 );
           done();
         } )
         .build_map();

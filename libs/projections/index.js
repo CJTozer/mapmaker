@@ -10,9 +10,10 @@ var Projections = function() {};
 
 // Get the projection object from the specified config.
 Projections.prototype.get_projection = function( config ) {
-  var proj_err = null;
-  var projection = null;
-  var proj_type = config.parameters.projection.type.toLowerCase();
+  var
+    proj_err = null,
+    projection = null,
+    proj_type = config.parameters.projection.type.toLowerCase();
   switch ( proj_type ) {
   case 'mercator':
     projection = d3.geoMercator();
