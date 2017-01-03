@@ -1,16 +1,15 @@
 {
   "name": "map-maker",
-  "version": "0.2.2-10",
+  "version": "0.2.2-14",
   "description": "Tool for building maps",
   "main": "index.js",
   "directories": {
     "example": "examples"
   },
   "scripts": {
-    "preversion": "jshint index.js libs/ && npm test",
-    "version": "esdoc && git add docs",
-    "test": "mocha",
-    "test-watch": "mocha test --watch",
+    "preversion": "grunt lint",
+    "version": "grunt docs-add && git add -u",
+    "test": "grunt test",
     "test-server": "http-server test-site"
   },
   "bin": {
@@ -39,12 +38,22 @@
     "node-css": "^0.1.0",
     "object-hash": "^1.1.5",
     "ogr2ogr": "^1.0.0",
+    "tabula": "^1.9.0",
     "url-join": "^1.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "esdoc": "^0.5.1",
+    "eslint": "^3.12.2",
+    "eslint-config-idiomatic": "^2.1.0",
+    "grunt": "^1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-esdoc": "0.0.4",
+    "grunt-git": "^1.0.3",
+    "grunt-mocha-test": "^0.13.2",
+    "gruntify-eslint": "^3.1.0",
     "jshint": "^2.9.4",
+    "jshint-stylish": "^2.2.1",
     "mocha": "^3.2.0"
   }
 }
