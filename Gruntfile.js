@@ -25,6 +25,11 @@ module.exports = function( grunt ) {
         jshintrc: '.jshintrc',
       },
     },
+    jsonlint: {
+      examples: {
+        src: [ 'examples/*.json' ],
+      },
+    },
     esdoc: {
       dist: {
         options: {
@@ -51,13 +56,14 @@ module.exports = function( grunt ) {
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
   grunt.loadNpmTasks( 'grunt-contrib-jshint' );
+  grunt.loadNpmTasks( 'grunt-jsonlint' );
   grunt.loadNpmTasks( 'grunt-esdoc' );
   grunt.loadNpmTasks( 'grunt-mocha-test' );
   grunt.loadNpmTasks( 'grunt-git' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
-  grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
+  grunt.registerTask( 'lint', [ 'eslint', 'jshint', 'jsonlint:examples' ] );
   grunt.registerTask( 'doc', 'esdoc' );
   grunt.registerTask( 'docs-add', [ 'doc', 'gitadd:docs' ] );
   grunt.registerTask( 'test', 'mochaTest' );
