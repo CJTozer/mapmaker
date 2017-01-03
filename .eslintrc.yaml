@@ -3,4 +3,4 @@ env:
   node: true
 rules:
   no-console: off
-  func-names: 0 # @@@ Try deleting, check RC for warnings...
+  func-names: 0
