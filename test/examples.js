@@ -27,7 +27,7 @@ describe( 'ExampleGeneration', function() {
           done( err );
         } )
         .onSuccess( ( data ) => {
-          assert.isAbove( data.length(), 0 );
+          assert.isAbove( data.length, 0 );
           done();
         } )
         .build_map();
