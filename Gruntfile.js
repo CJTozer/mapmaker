@@ -17,6 +17,7 @@ module.exports = function( grunt ) {
         'index.js',
         'Gruntfile.js',
         'libs/**/*.js',
+        'bin/**/*.js',
         'test/**/*.js',
       ],
       options: {

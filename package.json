@@ -13,7 +13,7 @@
     "test-server": "http-server test-site"
   },
   "bin": {
-    "mapmaker": "./index.js"
+    "mapmaker": "./bin/mapmaker.js"
   },
   "repository": {
     "type": "git",
