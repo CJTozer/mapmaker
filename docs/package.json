@@ -1,6 +1,6 @@
 {
   "name": "map-maker",
-  "version": "0.2.2-10",
+  "version": "0.2.2-11",
   "description": "Tool for building maps",
   "main": "index.js",
   "directories": {
@@ -39,11 +39,14 @@
     "node-css": "^0.1.0",
     "object-hash": "^1.1.5",
     "ogr2ogr": "^1.0.0",
+    "tabula": "^1.9.0",
     "url-join": "^1.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "esdoc": "^0.5.1",
+    "eslint": "^3.12.2",
+    "eslint-config-idiomatic": "^2.1.0",
     "jshint": "^2.9.4",
     "mocha": "^3.2.0"
   }
