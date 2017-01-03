@@ -1,0 +1,3 @@
+extends: "idiomatic"
+env:
+  node: true
