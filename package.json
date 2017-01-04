@@ -48,6 +48,7 @@
     "eslint-config-idiomatic": "^2.1.0",
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-watch": "^1.0.0",
     "grunt-esdoc": "0.0.4",
     "grunt-git": "^1.0.3",
     "grunt-jsonlint": "^1.1.0",

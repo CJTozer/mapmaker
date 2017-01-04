@@ -13,7 +13,7 @@ module.exports = function( grunt ) {
       src: [ '.' ],
     },
     jshint: {
-      allFiles: [
+      files: [
         'index.js',
         'Gruntfile.js',
         'libs/**/*.js',
@@ -52,6 +52,13 @@ module.exports = function( grunt ) {
         },
       },
     },
+    watch: {
+      files: [ '<%= jshint.files %>' ],
+      tasks: [ 'eslint' ],
+      options: {
+        spawn: false,
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
@@ -60,6 +67,7 @@ module.exports = function( grunt ) {
   grunt.loadNpmTasks( 'grunt-esdoc' );
   grunt.loadNpmTasks( 'grunt-mocha-test' );
   grunt.loadNpmTasks( 'grunt-git' );
+  grunt.loadNpmTasks( 'grunt-contrib-watch' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
