@@ -39,8 +39,6 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/map-builder/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-
-/* jshint esversion: 6 */
 &apos;use strict&apos;;
 
 const
@@ -345,7 +343,7 @@ class MapBuilder {
         console.log( chalk.bold.cyan( &apos;Downloading data: &apos; ) + self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
-          extract: true
+          extract: true,
         } ).then( () =&gt; {
           return callback( null );
         }, ( err ) =&gt; {
@@ -452,7 +450,7 @@ class MapBuilder {
 
         let {
           proj_err,
-          projection
+          projection,
         } = projections.get_projection( self.config );
         if ( proj_err ) {
           return callback( proj_err );

@@ -39,8 +39,6 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/projections/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-
-/* jshint esversion: 6 */
 &apos;use strict&apos;;
 
 const d3 = require( &apos;d3&apos; );
@@ -69,13 +67,13 @@ function get_projection( config ) {
       .scale( config.parameters.projection.scale )
       .translate( [
         config.parameters.projection.width / 2,
-        config.parameters.projection.width / 2
+        config.parameters.projection.width / 2,
       ] )
       .rotate( config.parameters.projection.rotation );
   }
   return {
     proj_err,
-    projection
+    projection,
   };
 }
 

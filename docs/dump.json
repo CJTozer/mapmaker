@@ -9,8 +9,8 @@
     "longname": "libs/map-builder/index.js",
     "access": null,
     "description": null,
-    "lineNumber": 4,
-    "content": "#!/usr/bin/env node\n\n/* jshint esversion: 6 */\n'use strict';\n\nconst\n  async = require( 'async' ),\n  chalk = require( 'chalk' ),\n  Config = require( 'merge-config' ),\n  css = require( 'node-css' ),\n  d3 = require( 'd3' ),\n  download = require( 'download' ),\n  fs = require( 'fs-extra' ),\n  hash = require( 'object-hash' ),\n  jsdom = require( 'jsdom' ),\n  ogr2ogr = require( 'ogr2ogr' ),\n  path = require( 'path' ),\n  projections = require( '../projections' ),\n  urljoin = require( 'url-join' ),\n  utils = require( '../utils' );\n\n/**\n * Class for encapsulating a map building operation.\n * @example\n * new MapBuilder()\n *   .specFile('examples/france.yaml')\n *   .onError((err) => {\n *     console.log(err);\n *   })\n *   .onSuccess((data) => {\n *     console.log(\"Success\");\n *     do_something_with_svg_data(data);\n *   })\n *   .build_map();\n */\nclass MapBuilder {\n  constructor() {\n    var self = this;\n    self.config = {};\n    self.data = {};\n    self.spec_obj = {};\n    self.spec_file = '';\n    self.output_exists = false;\n    self.css_string = '';\n    self.svg_text = 'Failed to build SVG';\n  }\n\n  /**\n   * Specify an error callback for this {@link MapBuilder}.\n   *\n   * @param {function(err: string)} err_cb - the error callback.\n   */\n  onError( err_cb ) {\n    this.err_cb = err_cb;\n    return this;\n  }\n\n  /**\n   * Specify a success callback for this {@link MapBuilder}.\n   *\n   * @param {function(data: string)} ok_cb - the success callback, passed the generated SVG as a string.\n   */\n  onSuccess( ok_cb ) {\n    this.ok_cb = ok_cb;\n    return this;\n  }\n\n  /**\n   * Specify the configuration to use.\n   *\n   * May be used in conjunction with {@link specFile}.  They will be merged with the\n   * spec_obj taking precedence in case of clashes.\n   *\n   * @param {!Object} spec_obj - object describing the configuration to use.\n   * @example\n   * var spec_obj = {\n   *   \"parameters\": {\n   *     \"projection\": {\n   *       \"type\": \"mercator\",\n   *       \"width\": 960,\n   *       \"height\": 1120,\n   *       \"scale\": 1600,\n   *       \"center\": [2, 50]\n   *     }\n   *   }\n   * }\n   * new MapBuilder()\n   *   .spec(spec_obj)\n   *   // (Register .onError and .onSuccess callbacks.)\n   *   .build_map();\n   */\n  spec( spec_obj ) {\n    this.spec_obj = spec_obj;\n    return this;\n  }\n\n  /**\n   * Specify the configuration to use.\n   *\n   * May be used in conjunction with {@link spec}.  They will be merged with the\n   * spec_obj taking precedence in case of clashes.\n   *\n   * @param {string} spec_file - configuration file to use.\n   */\n  specFile( spec_file ) {\n    this.spec_file = spec_file;\n    return this;\n  }\n\n  /**\n   * Specify whether to force a rebuild.\n   *\n   * Normally maps are cached based on the specification, but if you update\n   * this module you may want to use this option to force the map to be\n   * re-created.\n   *\n   * @param {boolean} force - whether to force map re-creation.\n   */\n  force( force ) {\n    this.force = force;\n    return this;\n  }\n\n  /**\n   * Asynchronously build the map.\n   *\n   * Requires {@link onError} and {@link onSuccess} specified to handle the\n   * results.\n   */\n  build_map() {\n    var self = this;\n    async.series( {\n      build_config: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Building config...' ) );\n        self.build_config( callback, self.spec_file );\n      },\n      check_for_existing_output: ( callback ) => {\n        fs.readFile( self.config.derived.output_svg, function( err, data ) {\n          if ( !err && !self.force ) {\n            console.log( chalk.bold.yellow( 'Output already generated: ' ) + self.config.derived.output_svg );\n            self.output_exists = true;\n            self.svg_text = data;\n          }\n          return callback( null );\n        } );\n      },\n      get_data_files: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Checking data sources...' ) );\n          self.get_data_files( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      filter_data: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Filtering data...' ) );\n          self.filter_data( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      build_css: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Generating CSS...' ) );\n          self.build_css( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      create_svg: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Creating SVG...' ) );\n          self.create_svg( callback );\n        } else {\n          return callback( null );\n        }\n      },\n    }, function( err ) {\n      if ( err ) {\n        console.log( chalk.bold.red( 'Failed!  ' ) + err );\n        if ( self.err_cb ) {\n          self.err_cb( err );\n        }\n      } else {\n        console.log( chalk.bold.green( 'Map Building Complete!' ) );\n        if ( self.ok_cb ) {\n          self.ok_cb( self.svg_text );\n        }\n      }\n    } );\n  }\n\n  /**\n   * Print information from the shape file specified in the config.\n   *\n   * Requires {@link onError} and {@link onSuccess} specified to handle the\n   * results.\n   */\n  get_shape_info() {\n    var self = this;\n    async.series( {\n      build_config: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Building config...' ) );\n        self.build_config( callback, self.spec_file );\n      },\n      get_data_files: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Checking data sources...' ) );\n        self.get_data_files( callback );\n      },\n      get_shape_info: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Getting shape info...' ) );\n        // @@@ Option to apply filter first.\n        // @@@ Get format from repo config?\n        ogr2ogr( self.config.derived.shape_file )\n          .format( 'GeoJSON' )\n          .exec( function( err, geo_data ) {\n            if ( err ) {\n              return callback( err );\n            }\n            self.data = geo_data;\n            return callback( null );\n          } );\n      },\n    }, function( err ) {\n      if ( err ) {\n        console.log( chalk.bold.red( 'Failed!  ' ) + err );\n        if ( self.err_cb ) {\n          self.err_cb( err );\n        }\n      } else {\n        console.log( chalk.bold.green( 'Parsed shape info!' ) );\n        if ( self.ok_cb ) {\n          self.ok_cb( self.data );\n        }\n      }\n    } );\n  }\n\n  /**\n   * Build up the configuration.\n   * @access private\n   */\n  build_config( callback ) {\n    var\n      self = this,\n      built_config,\n      shape_data,\n      file_base,\n      shape_dir,\n      repo_info,\n      sha;\n\n    // Get the global defaults then override with the specified specification.\n    built_config = new Config();\n    built_config.file( path.join( __dirname, '..', '..', 'defaults.yaml' ) );\n    if ( self.spec_file ) {\n      built_config.file( self.spec_file );\n    }\n    if ( self.spec_obj ) {\n      built_config.merge( self.spec_obj );\n    }\n    utils.debug( 'Pure Config', self.config );\n\n    // Set up derived config values:\n    // - Download dirs and shapefile name\n    shape_data = built_config.get( 'shape_data' );\n    file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( '.' ) ) || shape_data.filename;\n    shape_dir = path.join( 'data', shape_data.repo, shape_data.base, file_base );\n    built_config.set( 'derived:shape_dir', shape_dir );\n    built_config.set( 'derived:shape_file', path.join( shape_dir, file_base + '.shp' ) );\n\n    // - Info for the current repo\n    repo_info = built_config.get( 'repos' )[ shape_data.repo ];\n    built_config.set( 'derived:repo_info', repo_info );\n\n    // - Download target\n    built_config.set( 'derived:download_url', urljoin( repo_info.base_url, shape_data.base, shape_data.filename ) );\n\n    // - SHA of the spec file, and output file.\n    sha = hash( built_config.get() );\n    built_config.set( 'derived:spec_sha1', sha );\n    built_config.set( 'derived:output_svg', path.join( 'output', sha + '.svg' ) );\n\n    // Store off the config as a 'normal' object.\n    self.config = built_config.get();\n    utils.debug( 'Full Config', self.config );\n    return callback( null );\n  }\n\n  /**\n   * Ensure raw data is available.\n   * @access private\n   */\n  get_data_files( callback ) {\n    var self = this;\n\n    // Get the destination and check for existing data.\n    fs.access( self.config.derived.shape_dir, ( err ) => {\n      if ( !err ) {\n        console.log( chalk.bold.yellow( 'Data already available: ' ) + self.config.derived.shape_dir );\n        return callback( null );\n      } else {\n        // Directory doesn't exist, proceed with download.\n        console.log( chalk.bold.cyan( 'Downloading data: ' ) + self.config.derived.download_url );\n        // @@@ Get extract value from spec file...\n        download( self.config.derived.download_url, self.config.derived.shape_dir, {\n          extract: true\n        } ).then( () => {\n          return callback( null );\n        }, ( err ) => {\n          return callback( err );\n        } );\n      }\n    } );\n  }\n\n  /**\n   * Filter data using ogr2ogr.\n   * @access private\n   */\n  filter_data( callback ) {\n    var\n      self = this,\n      values,\n      options = [],\n      filter;\n    utils.debug( 'Countries config', self.config.parameters.countries );\n    utils.debug( 'Filter', self.config.parameters.filter );\n    filter = self.config.parameters.filter;\n    if ( filter ) {\n      switch ( filter.type ) {\n      case 'countries':\n        if ( !self.config.parameters.countries ) {\n          return callback( 'Cannot filter on countries with no countries specified - use \"type: all\"' );\n        }\n        values = Object.keys( self.config.parameters.countries ).join( '\\', \\'' );\n        options = options.concat( [ '-where', `${filter.key} IN (\\'${values}\\')` ] );\n        break;\n      case 'all':\n          // Include all countries - no filter\n        break;\n      default:\n        return callback( `Unknown value for \"filter\": ${filter.type}` );\n      }\n    }\n    // @@@ Get format from repo config?\n    ogr2ogr( self.config.derived.shape_file )\n      .format( 'GeoJSON' )\n      .options( options )\n      .exec( function( err, geo_data ) {\n        if ( err ) {\n          return callback( err );\n        }\n        self.data = geo_data;\n        return callback( null );\n      } );\n  }\n\n  /**\n   * Generate the CSS.\n   * @access private\n   */\n  build_css( callback ) {\n    var\n      self = this,\n      base_style = self.config.style,\n      countries;\n    Object.keys( base_style ).forEach( ( key ) => {\n      var data = base_style[ key ];\n      if ( data ) {\n        self.css_string += css( key, data );\n      }\n    } );\n\n    // Per-country CSS.\n    countries = self.config.parameters.countries;\n    if ( countries ) {\n      Object.keys( countries ).forEach( ( key ) => {\n        var data = countries[ key ];\n        if ( data ) {\n          self.css_string += css( `.ADM0_A3-${key}`, data );\n        }\n      } );\n    }\n    utils.debug( 'Generated CSS', self.css_string );\n    return callback( null );\n  }\n\n  /**\n   * Create the SVG file.\n   * @access private\n   */\n  create_svg( callback ) {\n    var self = this;\n    // Use jsdom to create a fake DOM to work in.\n    jsdom.env( '<body />',\n      function( err, window ) {\n        var\n          body,\n          svg,\n          path;\n        if ( err ) {\n          return callback( err );\n        }\n\n        // Create an SVG element for the map.\n        body = d3.select( window.document ).select( 'body' );\n        svg = body.append( 'svg' )\n          .attr( 'width', self.config.parameters.projection.width )\n          .attr( 'height', self.config.parameters.projection.height );\n\n        let {\n          proj_err,\n          projection\n        } = projections.get_projection( self.config );\n        if ( proj_err ) {\n          return callback( proj_err );\n        }\n        path = d3.geoPath()\n          .projection( projection );\n\n        // Add an appropriate class to each country.\n        svg.selectAll( '.country' )\n          .data( self.data.features )\n          .enter().append( 'path' )\n          .attr( 'class', function( d ) {\n            return [\n              'ADM0_A3-' + d.properties.ADM0_A3,\n              'SU_A3-' + d.properties.SU_A3,\n              'GU_A3-' + d.properties.GU_A3,\n            ].join( ' ' );\n          } )\n          .attr( 'd', path );\n\n        // Add in the CSS style.\n        svg.append( 'style' ).text( self.css_string );\n\n        // Write SVG to the output directory.\n        // Write body.html() to the SVG file as this is effectively svg.outerHTML.\n        if ( !fs.existsSync( 'output' ) ) {\n          fs.mkdirSync( 'output' );\n        }\n        self.svg_text = body.html();\n        fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {\n          if ( err ) {\n            console.log( err );\n            return callback( err );\n          }\n\n          console.log( 'Saved to ' + self.config.derived.output_svg );\n          return callback( null );\n        } );\n      }\n    );\n  }\n}\n\n// Export the MapBuilder class.\nmodule.exports = MapBuilder;\n"
+    "lineNumber": 2,
+    "content": "#!/usr/bin/env node\n'use strict';\n\nconst\n  async = require( 'async' ),\n  chalk = require( 'chalk' ),\n  Config = require( 'merge-config' ),\n  css = require( 'node-css' ),\n  d3 = require( 'd3' ),\n  download = require( 'download' ),\n  fs = require( 'fs-extra' ),\n  hash = require( 'object-hash' ),\n  jsdom = require( 'jsdom' ),\n  ogr2ogr = require( 'ogr2ogr' ),\n  path = require( 'path' ),\n  projections = require( '../projections' ),\n  urljoin = require( 'url-join' ),\n  utils = require( '../utils' );\n\n/**\n * Class for encapsulating a map building operation.\n * @example\n * new MapBuilder()\n *   .specFile('examples/france.yaml')\n *   .onError((err) => {\n *     console.log(err);\n *   })\n *   .onSuccess((data) => {\n *     console.log(\"Success\");\n *     do_something_with_svg_data(data);\n *   })\n *   .build_map();\n */\nclass MapBuilder {\n  constructor() {\n    var self = this;\n    self.config = {};\n    self.data = {};\n    self.spec_obj = {};\n    self.spec_file = '';\n    self.output_exists = false;\n    self.css_string = '';\n    self.svg_text = 'Failed to build SVG';\n  }\n\n  /**\n   * Specify an error callback for this {@link MapBuilder}.\n   *\n   * @param {function(err: string)} err_cb - the error callback.\n   */\n  onError( err_cb ) {\n    this.err_cb = err_cb;\n    return this;\n  }\n\n  /**\n   * Specify a success callback for this {@link MapBuilder}.\n   *\n   * @param {function(data: string)} ok_cb - the success callback, passed the generated SVG as a string.\n   */\n  onSuccess( ok_cb ) {\n    this.ok_cb = ok_cb;\n    return this;\n  }\n\n  /**\n   * Specify the configuration to use.\n   *\n   * May be used in conjunction with {@link specFile}.  They will be merged with the\n   * spec_obj taking precedence in case of clashes.\n   *\n   * @param {!Object} spec_obj - object describing the configuration to use.\n   * @example\n   * var spec_obj = {\n   *   \"parameters\": {\n   *     \"projection\": {\n   *       \"type\": \"mercator\",\n   *       \"width\": 960,\n   *       \"height\": 1120,\n   *       \"scale\": 1600,\n   *       \"center\": [2, 50]\n   *     }\n   *   }\n   * }\n   * new MapBuilder()\n   *   .spec(spec_obj)\n   *   // (Register .onError and .onSuccess callbacks.)\n   *   .build_map();\n   */\n  spec( spec_obj ) {\n    this.spec_obj = spec_obj;\n    return this;\n  }\n\n  /**\n   * Specify the configuration to use.\n   *\n   * May be used in conjunction with {@link spec}.  They will be merged with the\n   * spec_obj taking precedence in case of clashes.\n   *\n   * @param {string} spec_file - configuration file to use.\n   */\n  specFile( spec_file ) {\n    this.spec_file = spec_file;\n    return this;\n  }\n\n  /**\n   * Specify whether to force a rebuild.\n   *\n   * Normally maps are cached based on the specification, but if you update\n   * this module you may want to use this option to force the map to be\n   * re-created.\n   *\n   * @param {boolean} force - whether to force map re-creation.\n   */\n  force( force ) {\n    this.force = force;\n    return this;\n  }\n\n  /**\n   * Asynchronously build the map.\n   *\n   * Requires {@link onError} and {@link onSuccess} specified to handle the\n   * results.\n   */\n  build_map() {\n    var self = this;\n    async.series( {\n      build_config: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Building config...' ) );\n        self.build_config( callback, self.spec_file );\n      },\n      check_for_existing_output: ( callback ) => {\n        fs.readFile( self.config.derived.output_svg, function( err, data ) {\n          if ( !err && !self.force ) {\n            console.log( chalk.bold.yellow( 'Output already generated: ' ) + self.config.derived.output_svg );\n            self.output_exists = true;\n            self.svg_text = data;\n          }\n          return callback( null );\n        } );\n      },\n      get_data_files: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Checking data sources...' ) );\n          self.get_data_files( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      filter_data: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Filtering data...' ) );\n          self.filter_data( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      build_css: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Generating CSS...' ) );\n          self.build_css( callback );\n        } else {\n          return callback( null );\n        }\n      },\n      create_svg: ( callback ) => {\n        if ( !self.output_exists ) {\n          console.log( chalk.bold.cyan( 'Creating SVG...' ) );\n          self.create_svg( callback );\n        } else {\n          return callback( null );\n        }\n      },\n    }, function( err ) {\n      if ( err ) {\n        console.log( chalk.bold.red( 'Failed!  ' ) + err );\n        if ( self.err_cb ) {\n          self.err_cb( err );\n        }\n      } else {\n        console.log( chalk.bold.green( 'Map Building Complete!' ) );\n        if ( self.ok_cb ) {\n          self.ok_cb( self.svg_text );\n        }\n      }\n    } );\n  }\n\n  /**\n   * Print information from the shape file specified in the config.\n   *\n   * Requires {@link onError} and {@link onSuccess} specified to handle the\n   * results.\n   */\n  get_shape_info() {\n    var self = this;\n    async.series( {\n      build_config: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Building config...' ) );\n        self.build_config( callback, self.spec_file );\n      },\n      get_data_files: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Checking data sources...' ) );\n        self.get_data_files( callback );\n      },\n      get_shape_info: ( callback ) => {\n        console.log( chalk.bold.cyan( 'Getting shape info...' ) );\n        // @@@ Option to apply filter first.\n        // @@@ Get format from repo config?\n        ogr2ogr( self.config.derived.shape_file )\n          .format( 'GeoJSON' )\n          .exec( function( err, geo_data ) {\n            if ( err ) {\n              return callback( err );\n            }\n            self.data = geo_data;\n            return callback( null );\n          } );\n      },\n    }, function( err ) {\n      if ( err ) {\n        console.log( chalk.bold.red( 'Failed!  ' ) + err );\n        if ( self.err_cb ) {\n          self.err_cb( err );\n        }\n      } else {\n        console.log( chalk.bold.green( 'Parsed shape info!' ) );\n        if ( self.ok_cb ) {\n          self.ok_cb( self.data );\n        }\n      }\n    } );\n  }\n\n  /**\n   * Build up the configuration.\n   * @access private\n   */\n  build_config( callback ) {\n    var\n      self = this,\n      built_config,\n      shape_data,\n      file_base,\n      shape_dir,\n      repo_info,\n      sha;\n\n    // Get the global defaults then override with the specified specification.\n    built_config = new Config();\n    built_config.file( path.join( __dirname, '..', '..', 'defaults.yaml' ) );\n    if ( self.spec_file ) {\n      built_config.file( self.spec_file );\n    }\n    if ( self.spec_obj ) {\n      built_config.merge( self.spec_obj );\n    }\n    utils.debug( 'Pure Config', self.config );\n\n    // Set up derived config values:\n    // - Download dirs and shapefile name\n    shape_data = built_config.get( 'shape_data' );\n    file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( '.' ) ) || shape_data.filename;\n    shape_dir = path.join( 'data', shape_data.repo, shape_data.base, file_base );\n    built_config.set( 'derived:shape_dir', shape_dir );\n    built_config.set( 'derived:shape_file', path.join( shape_dir, file_base + '.shp' ) );\n\n    // - Info for the current repo\n    repo_info = built_config.get( 'repos' )[ shape_data.repo ];\n    built_config.set( 'derived:repo_info', repo_info );\n\n    // - Download target\n    built_config.set( 'derived:download_url', urljoin( repo_info.base_url, shape_data.base, shape_data.filename ) );\n\n    // - SHA of the spec file, and output file.\n    sha = hash( built_config.get() );\n    built_config.set( 'derived:spec_sha1', sha );\n    built_config.set( 'derived:output_svg', path.join( 'output', sha + '.svg' ) );\n\n    // Store off the config as a 'normal' object.\n    self.config = built_config.get();\n    utils.debug( 'Full Config', self.config );\n    return callback( null );\n  }\n\n  /**\n   * Ensure raw data is available.\n   * @access private\n   */\n  get_data_files( callback ) {\n    var self = this;\n\n    // Get the destination and check for existing data.\n    fs.access( self.config.derived.shape_dir, ( err ) => {\n      if ( !err ) {\n        console.log( chalk.bold.yellow( 'Data already available: ' ) + self.config.derived.shape_dir );\n        return callback( null );\n      } else {\n        // Directory doesn't exist, proceed with download.\n        console.log( chalk.bold.cyan( 'Downloading data: ' ) + self.config.derived.download_url );\n        // @@@ Get extract value from spec file...\n        download( self.config.derived.download_url, self.config.derived.shape_dir, {\n          extract: true,\n        } ).then( () => {\n          return callback( null );\n        }, ( err ) => {\n          return callback( err );\n        } );\n      }\n    } );\n  }\n\n  /**\n   * Filter data using ogr2ogr.\n   * @access private\n   */\n  filter_data( callback ) {\n    var\n      self = this,\n      values,\n      options = [],\n      filter;\n    utils.debug( 'Countries config', self.config.parameters.countries );\n    utils.debug( 'Filter', self.config.parameters.filter );\n    filter = self.config.parameters.filter;\n    if ( filter ) {\n      switch ( filter.type ) {\n      case 'countries':\n        if ( !self.config.parameters.countries ) {\n          return callback( 'Cannot filter on countries with no countries specified - use \"type: all\"' );\n        }\n        values = Object.keys( self.config.parameters.countries ).join( '\\', \\'' );\n        options = options.concat( [ '-where', `${filter.key} IN (\\'${values}\\')` ] );\n        break;\n      case 'all':\n          // Include all countries - no filter\n        break;\n      default:\n        return callback( `Unknown value for \"filter\": ${filter.type}` );\n      }\n    }\n    // @@@ Get format from repo config?\n    ogr2ogr( self.config.derived.shape_file )\n      .format( 'GeoJSON' )\n      .options( options )\n      .exec( function( err, geo_data ) {\n        if ( err ) {\n          return callback( err );\n        }\n        self.data = geo_data;\n        return callback( null );\n      } );\n  }\n\n  /**\n   * Generate the CSS.\n   * @access private\n   */\n  build_css( callback ) {\n    var\n      self = this,\n      base_style = self.config.style,\n      countries;\n    Object.keys( base_style ).forEach( ( key ) => {\n      var data = base_style[ key ];\n      if ( data ) {\n        self.css_string += css( key, data );\n      }\n    } );\n\n    // Per-country CSS.\n    countries = self.config.parameters.countries;\n    if ( countries ) {\n      Object.keys( countries ).forEach( ( key ) => {\n        var data = countries[ key ];\n        if ( data ) {\n          self.css_string += css( `.ADM0_A3-${key}`, data );\n        }\n      } );\n    }\n    utils.debug( 'Generated CSS', self.css_string );\n    return callback( null );\n  }\n\n  /**\n   * Create the SVG file.\n   * @access private\n   */\n  create_svg( callback ) {\n    var self = this;\n    // Use jsdom to create a fake DOM to work in.\n    jsdom.env( '<body />',\n      function( err, window ) {\n        var\n          body,\n          svg,\n          path;\n        if ( err ) {\n          return callback( err );\n        }\n\n        // Create an SVG element for the map.\n        body = d3.select( window.document ).select( 'body' );\n        svg = body.append( 'svg' )\n          .attr( 'width', self.config.parameters.projection.width )\n          .attr( 'height', self.config.parameters.projection.height );\n\n        let {\n          proj_err,\n          projection,\n        } = projections.get_projection( self.config );\n        if ( proj_err ) {\n          return callback( proj_err );\n        }\n        path = d3.geoPath()\n          .projection( projection );\n\n        // Add an appropriate class to each country.\n        svg.selectAll( '.country' )\n          .data( self.data.features )\n          .enter().append( 'path' )\n          .attr( 'class', function( d ) {\n            return [\n              'ADM0_A3-' + d.properties.ADM0_A3,\n              'SU_A3-' + d.properties.SU_A3,\n              'GU_A3-' + d.properties.GU_A3,\n            ].join( ' ' );\n          } )\n          .attr( 'd', path );\n\n        // Add in the CSS style.\n        svg.append( 'style' ).text( self.css_string );\n\n        // Write SVG to the output directory.\n        // Write body.html() to the SVG file as this is effectively svg.outerHTML.\n        if ( !fs.existsSync( 'output' ) ) {\n          fs.mkdirSync( 'output' );\n        }\n        self.svg_text = body.html();\n        fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {\n          if ( err ) {\n            console.log( err );\n            return callback( err );\n          }\n\n          console.log( 'Saved to ' + self.config.derived.output_svg );\n          return callback( null );\n        } );\n      }\n    );\n  }\n}\n\n// Export the MapBuilder class.\nmodule.exports = MapBuilder;\n"
   },
   {
     "__docId__": 1,
@@ -25,7 +25,7 @@
     "importPath": "map-maker/libs/map-builder/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 6,
+    "lineNumber": 4,
     "undocument": true,
     "type": {
       "types": [
@@ -49,7 +49,7 @@
     "examples": [
       "new MapBuilder()\n  .specFile('examples/france.yaml')\n  .onError((err) => {\n    console.log(err);\n  })\n  .onSuccess((data) => {\n    console.log(\"Success\");\n    do_something_with_svg_data(data);\n  })\n  .build_map();"
     ],
-    "lineNumber": 36,
+    "lineNumber": 34,
     "interface": false
   },
   {
@@ -62,7 +62,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#constructor",
     "access": null,
     "description": null,
-    "lineNumber": 37,
+    "lineNumber": 35,
     "undocument": true,
     "params": [],
     "generator": false
@@ -77,7 +77,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#onError",
     "access": null,
     "description": "Specify an error callback for this {@link MapBuilder}.",
-    "lineNumber": 53,
+    "lineNumber": 51,
     "params": [
       {
         "nullable": null,
@@ -107,7 +107,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#err_cb",
     "access": null,
     "description": null,
-    "lineNumber": 54,
+    "lineNumber": 52,
     "undocument": true,
     "type": {
       "types": [
@@ -125,7 +125,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#onSuccess",
     "access": null,
     "description": "Specify a success callback for this {@link MapBuilder}.",
-    "lineNumber": 63,
+    "lineNumber": 61,
     "params": [
       {
         "nullable": null,
@@ -155,7 +155,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#ok_cb",
     "access": null,
     "description": null,
-    "lineNumber": 64,
+    "lineNumber": 62,
     "undocument": true,
     "type": {
       "types": [
@@ -176,7 +176,7 @@
     "examples": [
       "var spec_obj = {\n  \"parameters\": {\n    \"projection\": {\n      \"type\": \"mercator\",\n      \"width\": 960,\n      \"height\": 1120,\n      \"scale\": 1600,\n      \"center\": [2, 50]\n    }\n  }\n}\nnew MapBuilder()\n  .spec(spec_obj)\n  // (Register .onError and .onSuccess callbacks.)\n  .build_map();"
     ],
-    "lineNumber": 92,
+    "lineNumber": 90,
     "params": [
       {
         "nullable": false,
@@ -206,7 +206,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#spec_obj",
     "access": null,
     "description": null,
-    "lineNumber": 93,
+    "lineNumber": 91,
     "undocument": true,
     "type": {
       "types": [
@@ -224,7 +224,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#specFile",
     "access": null,
     "description": "Specify the configuration to use.\n\nMay be used in conjunction with {@link spec}.  They will be merged with the\nspec_obj taking precedence in case of clashes.",
-    "lineNumber": 105,
+    "lineNumber": 103,
     "params": [
       {
         "nullable": null,
@@ -254,7 +254,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#spec_file",
     "access": null,
     "description": null,
-    "lineNumber": 106,
+    "lineNumber": 104,
     "undocument": true,
     "type": {
       "types": [
@@ -272,7 +272,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#force",
     "access": null,
     "description": "Specify whether to force a rebuild.\n\nNormally maps are cached based on the specification, but if you update\nthis module you may want to use this option to force the map to be\nre-created.",
-    "lineNumber": 119,
+    "lineNumber": 117,
     "params": [
       {
         "nullable": null,
@@ -302,7 +302,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#force",
     "access": null,
     "description": null,
-    "lineNumber": 120,
+    "lineNumber": 118,
     "undocument": true,
     "type": {
       "types": [
@@ -320,7 +320,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#build_map",
     "access": null,
     "description": "Asynchronously build the map.\n\nRequires {@link onError} and {@link onSuccess} specified to handle the\nresults.",
-    "lineNumber": 130,
+    "lineNumber": 128,
     "params": [],
     "generator": false
   },
@@ -334,7 +334,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#get_shape_info",
     "access": null,
     "description": "Print information from the shape file specified in the config.\n\nRequires {@link onError} and {@link onSuccess} specified to handle the\nresults.",
-    "lineNumber": 200,
+    "lineNumber": 198,
     "params": [],
     "generator": false
   },
@@ -348,7 +348,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#build_config",
     "access": "private",
     "description": "Build up the configuration.",
-    "lineNumber": 244,
+    "lineNumber": 242,
     "params": [
       {
         "name": "callback",
@@ -374,7 +374,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#get_data_files",
     "access": "private",
     "description": "Ensure raw data is available.",
-    "lineNumber": 295,
+    "lineNumber": 293,
     "params": [
       {
         "name": "callback",
@@ -395,7 +395,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#filter_data",
     "access": "private",
     "description": "Filter data using ogr2ogr.",
-    "lineNumber": 322,
+    "lineNumber": 320,
     "params": [
       {
         "name": "callback",
@@ -421,7 +421,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#build_css",
     "access": "private",
     "description": "Generate the CSS.",
-    "lineNumber": 364,
+    "lineNumber": 362,
     "params": [
       {
         "name": "callback",
@@ -447,7 +447,7 @@
     "longname": "libs/map-builder/index.js~MapBuilder#create_svg",
     "access": "private",
     "description": "Create the SVG file.",
-    "lineNumber": 394,
+    "lineNumber": 392,
     "params": [
       {
         "name": "callback",
@@ -468,8 +468,8 @@
     "longname": "libs/projections/index.js",
     "access": null,
     "description": null,
-    "lineNumber": 4,
-    "content": "#!/usr/bin/env node\n\n/* jshint esversion: 6 */\n'use strict';\n\nconst d3 = require( 'd3' );\n\n// Get the projection object from the specified config.\nfunction get_projection( config ) {\n  var\n    proj_err = null,\n    projection = null,\n    proj_type = config.parameters.projection.type.toLowerCase();\n  switch ( proj_type ) {\n  case 'mercator':\n    projection = d3.geoMercator();\n    break;\n  case 'albers':\n    // @@@ Get parallels from config?\n    projection = d3.geoAlbers()\n      .parallels( [ 50, 60 ] );\n    break;\n  default:\n    proj_err = `Unrecognized projection \"${proj_type}\"\"`;\n  }\n  if ( !proj_err ) {\n    projection = projection\n      .center( config.parameters.projection.center )\n      .scale( config.parameters.projection.scale )\n      .translate( [\n        config.parameters.projection.width / 2,\n        config.parameters.projection.width / 2\n      ] )\n      .rotate( config.parameters.projection.rotation );\n  }\n  return {\n    proj_err,\n    projection\n  };\n}\n\nmodule.exports.get_projection = get_projection;\n"
+    "lineNumber": 2,
+    "content": "#!/usr/bin/env node\n'use strict';\n\nconst d3 = require( 'd3' );\n\n// Get the projection object from the specified config.\nfunction get_projection( config ) {\n  var\n    proj_err = null,\n    projection = null,\n    proj_type = config.parameters.projection.type.toLowerCase();\n  switch ( proj_type ) {\n  case 'mercator':\n    projection = d3.geoMercator();\n    break;\n  case 'albers':\n    // @@@ Get parallels from config?\n    projection = d3.geoAlbers()\n      .parallels( [ 50, 60 ] );\n    break;\n  default:\n    proj_err = `Unrecognized projection \"${proj_type}\"\"`;\n  }\n  if ( !proj_err ) {\n    projection = projection\n      .center( config.parameters.projection.center )\n      .scale( config.parameters.projection.scale )\n      .translate( [\n        config.parameters.projection.width / 2,\n        config.parameters.projection.width / 2,\n      ] )\n      .rotate( config.parameters.projection.rotation );\n  }\n  return {\n    proj_err,\n    projection,\n  };\n}\n\nmodule.exports.get_projection = get_projection;\n"
   },
   {
     "__docId__": 22,
@@ -484,7 +484,7 @@
     "importPath": "map-maker/libs/projections/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 6,
+    "lineNumber": 4,
     "undocument": true,
     "type": {
       "types": [
@@ -505,7 +505,7 @@
     "importPath": "map-maker/libs/projections/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 9,
+    "lineNumber": 7,
     "undocument": true,
     "params": [
       {
@@ -532,8 +532,8 @@
     "longname": "libs/utils/index.js",
     "access": null,
     "description": null,
-    "lineNumber": 4,
-    "content": "#!/usr/bin/env node\n\n/* jshint esversion: 6 */\n'use strict';\n\nconst chalk = require( 'chalk' );\n\n// Debug log\nfunction debug( tag, obj ) {\n  var\n    str;\n  if ( process.env.debug ) {\n    if ( !obj ) {\n      obj = tag;\n      tag = 'Debug:';\n    }\n    str = chalk.bold.magenta( tag );\n    str += ': ';\n    if ( typeof obj === 'string' ) {\n      str += chalk.dim.gray( obj );\n    } else {\n      str += chalk.dim.gray( JSON.stringify( obj, undefined, 2 ) );\n    }\n    console.log( str );\n  }\n}\n\nmodule.exports.debug = debug;\n"
+    "lineNumber": 2,
+    "content": "#!/usr/bin/env node\n'use strict';\n\nconst chalk = require( 'chalk' );\n\n// Debug log\nfunction debug( tag, obj ) {\n  var\n    str;\n  if ( process.env.debug ) {\n    if ( !obj ) {\n      obj = tag;\n      tag = 'Debug:';\n    }\n    str = chalk.bold.magenta( tag );\n    str += ': ';\n    if ( typeof obj === 'string' ) {\n      str += chalk.dim.gray( obj );\n    } else {\n      str += chalk.dim.gray( JSON.stringify( obj, undefined, 2 ) );\n    }\n    console.log( str );\n  }\n}\n\nmodule.exports.debug = debug;\n"
   },
   {
     "__docId__": 25,
@@ -548,7 +548,7 @@
     "importPath": "map-maker/libs/utils/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 6,
+    "lineNumber": 4,
     "undocument": true,
     "type": {
       "types": [
@@ -569,7 +569,7 @@
     "importPath": "map-maker/libs/utils/index.js",
     "importStyle": null,
     "description": null,
-    "lineNumber": 9,
+    "lineNumber": 7,
     "undocument": true,
     "params": [
       {
