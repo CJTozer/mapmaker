@@ -305,7 +305,7 @@ class MapBuilder {
         console.log( chalk.bold.cyan( 'Downloading data: ' ) + self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
-          extract: true
+          extract: true,
         } ).then( () => {
           return callback( null );
         }, ( err ) => {
@@ -412,7 +412,7 @@ class MapBuilder {
 
         let {
           proj_err,
-          projection
+          projection,
         } = projections.get_projection( self.config );
         if ( proj_err ) {
           return callback( proj_err );

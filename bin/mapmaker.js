@@ -34,7 +34,7 @@ program
 // Catch-all for unrecognized sub-command (so show help).
 program
   .command( '*', null, {
-    noHelp: true
+    noHelp: true,
   } )
   .action( () => {
     program.outputHelp();
@@ -93,11 +93,11 @@ function list_shape_info( spec_file ) {
         // @@@ Get columns from a command option.
         columns: [ {
           lookup: 'NAME_LONG',
-          name: chalk.bold.magenta( 'Name' )
+          name: chalk.bold.magenta( 'Name' ),
         }, {
           lookup: 'ADM0_A3',
-          name: chalk.bold.magenta( 'ADM0_A3' )
-        } ]
+          name: chalk.bold.magenta( 'ADM0_A3' ),
+        } ],
       } );
       // @@@ Option to just list keys.
       // console.log(data.features[0]);

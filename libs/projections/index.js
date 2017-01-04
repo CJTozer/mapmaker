@@ -29,13 +29,13 @@ function get_projection( config ) {
       .scale( config.parameters.projection.scale )
       .translate( [
         config.parameters.projection.width / 2,
-        config.parameters.projection.width / 2
+        config.parameters.projection.width / 2,
       ] )
       .rotate( config.parameters.projection.rotation );
   }
   return {
     proj_err,
-    projection
+    projection,
   };
 }
 
