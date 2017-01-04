@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-/* jshint esversion: 6 */
 'use strict';
 
 module.exports = function( grunt ) {
@@ -27,7 +25,10 @@ module.exports = function( grunt ) {
     },
     jsonlint: {
       examples: {
-        src: [ 'examples/*.json' ],
+        src: [
+          'package.json',
+          'examples/*.json',
+        ],
       },
     },
     esdoc: {

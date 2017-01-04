@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-/* jshint esversion: 6 */
 'use strict';
 
 const d3 = require( 'd3' );
