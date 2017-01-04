@@ -27,6 +27,8 @@ module.exports = function( grunt ) {
       examples: {
         src: [
           'package.json',
+          '.jshintrc',
+          '.esdoc.json',
           'examples/*.json',
         ],
       },
