@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-/* jshint esversion: 6 */
 'use strict';
 
 const
@@ -8,7 +6,7 @@ const
   assert = chai.assert,
   fs = require( 'fs' ),
   path = require( 'path' ),
-  MapMaker = require( '../index.js' );
+  MapMaker = require( '..' );
 
 /* global describe, it */
 describe( 'ExampleGeneration', function() {

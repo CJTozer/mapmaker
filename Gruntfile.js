@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-
-/* jshint esversion: 6 */
 'use strict';
 
 module.exports = function( grunt ) {
@@ -13,15 +11,26 @@ module.exports = function( grunt ) {
       src: [ '.' ],
     },
     jshint: {
-      allFiles: [
+      files: [
         'index.js',
         'Gruntfile.js',
         'libs/**/*.js',
+        'bin/**/*.js',
         'test/**/*.js',
       ],
       options: {
         reporter: require( 'jshint-stylish' ),
         jshintrc: '.jshintrc',
+      },
+    },
+    jsonlint: {
+      examples: {
+        src: [
+          'package.json',
+          '.jshintrc',
+          '.esdoc.json',
+          'examples/*.json',
+        ],
       },
     },
     esdoc: {
@@ -46,17 +55,26 @@ module.exports = function( grunt ) {
         },
       },
     },
+    watch: {
+      files: [ '<%= jshint.files %>' ],
+      tasks: [ 'eslint' ],
+      options: {
+        spawn: false,
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
   grunt.loadNpmTasks( 'grunt-contrib-jshint' );
+  grunt.loadNpmTasks( 'grunt-jsonlint' );
   grunt.loadNpmTasks( 'grunt-esdoc' );
   grunt.loadNpmTasks( 'grunt-mocha-test' );
   grunt.loadNpmTasks( 'grunt-git' );
+  grunt.loadNpmTasks( 'grunt-contrib-watch' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
-  grunt.registerTask( 'lint', [ 'eslint', 'jshint' ] );
+  grunt.registerTask( 'lint', [ 'eslint', 'jshint', 'jsonlint:examples' ] );
   grunt.registerTask( 'doc', 'esdoc' );
   grunt.registerTask( 'docs-add', [ 'doc', 'gitadd:docs' ] );
   grunt.registerTask( 'test', 'mochaTest' );

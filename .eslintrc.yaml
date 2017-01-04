@@ -4,3 +4,9 @@ env:
 rules:
   no-console: off
   func-names: 0
+  comma-dangle:
+    - error
+    - always-multiline
+  semi:
+    - error
+    - always
