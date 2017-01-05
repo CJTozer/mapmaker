@@ -6,7 +6,8 @@ const
   fs = require( 'fs-extra' ),
   program = require( 'commander' ),
   tabula = require( 'tabula' ),
-  MapBuilder = require( '../libs/map-builder' );
+  MapBuilder = require( '../libs/map-builder' ),
+  Utils = require( '../libs/utils' );
 
 // Global options.
 program
@@ -25,6 +26,8 @@ program
 program
   .command( 'list' )
   .description( 'List the keys in the shape file used by the given spec file' )
+  .option( '-c, --columns <fields>', 'The fields to display.  Default: ADM0_A3,SU_A3', Utils.listSplit )
+  .option( '-l, --list_columns', 'Show all columns in this data.' )
   .arguments( '<spec_file>', 'Config file containing the shape file info.  E.g. examples/france.yaml' )
   // @@@ Option to list specific keys only (or to get a list of valid keys - no values?).
   .action( list_shape_info );
@@ -72,7 +75,8 @@ function build_map( spec_file ) {
 
 // Handy function for listing shape file data.
 function list_shape_info( spec_file ) {
-  // var cmd = this;
+  /* jshint validthis:true */
+  var cmd = this;
   var mapbuilder;
   if ( program.debug ) {
     process.env.debug = true;
@@ -83,22 +87,38 @@ function list_shape_info( spec_file ) {
       throw new Error( err );
     } )
     .onSuccess( ( data ) => {
-      // Tabulate the data.
-      var shape_elements = data.features.map( ( x ) => {
-        return x.properties;
-      } );
-      tabula( shape_elements, {
-        // @@@ Get columns from a command option.
-        columns: [ {
-          lookup: 'NAME_LONG',
-          name: chalk.bold.magenta( 'Name' ),
-        }, {
-          lookup: 'ADM0_A3',
-          name: chalk.bold.magenta( 'ADM0_A3' ),
-        } ],
-      } );
-      // @@@ Option to just list keys.
-      // console.log(data.features[0]);
+      if ( cmd.list_columns ) {
+        // Just list all properties in first data element.
+        console.log( chalk.bold.magenta( 'All data properties:' ) );
+        Object.keys( data.features[ 0 ].properties ).forEach( ( p ) => {
+          console.log( p );
+        } );
+      } else {
+        // Tabulate the data.
+        var
+          shape_elements,
+          columns;
+
+        // Use default columns if not given as an option.
+        if ( !cmd.columns ) {
+          cmd.columns = [ 'ADM0_A3', 'SU_A3', 'CONTINENT' ];
+        }
+        columns = cmd.columns.map( ( x ) => {
+          return {
+            lookup: x,
+            name: chalk.bold.magenta( x ),
+          };
+        } );
+        shape_elements = data.features.map( ( x ) => {
+          return x.properties;
+        } );
+        tabula( shape_elements, {
+          columns: [ {
+            lookup: 'NAME_LONG',
+            name: chalk.bold.magenta( 'Name' ),
+          } ].concat( columns ),
+        } );
+      }
     } );
   mapbuilder.get_shape_info();
 }

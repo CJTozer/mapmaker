@@ -4,7 +4,7 @@
 const chalk = require( 'chalk' );
 
 // Debug log
-function debug( tag, obj ) {
+module.exports.debug = function debug( tag, obj ) {
   var
     str;
   if ( process.env.debug ) {
@@ -21,6 +21,9 @@ function debug( tag, obj ) {
     }
     console.log( str );
   }
-}
+};
 
-module.exports.debug = debug;
+// Split a comma-separated list
+module.exports.listSplit = function listSplit( val ) {
+  return val.split( ',' );
+};
