@@ -62,6 +62,11 @@ module.exports = function( grunt ) {
         spawn: false,
       },
     },
+    githooks: {
+      all: {
+        'pre-commit': 'lint test',
+      },
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
@@ -71,6 +76,7 @@ module.exports = function( grunt ) {
   grunt.loadNpmTasks( 'grunt-mocha-test' );
   grunt.loadNpmTasks( 'grunt-git' );
   grunt.loadNpmTasks( 'grunt-contrib-watch' );
+  grunt.loadNpmTasks( 'grunt-githooks' );
 
   grunt.registerTask( 'default', [ 'lint' ] );
 
