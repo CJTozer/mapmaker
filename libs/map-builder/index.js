@@ -239,6 +239,7 @@ class MapBuilder {
    * Build up the configuration.
    * @access private
    */
+  // @@@ TODO move this to libs/config
   build_config( callback ) {
     var
       self = this,
