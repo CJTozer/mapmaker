@@ -4,7 +4,7 @@
 const d3 = require( 'd3' );
 
 // Get the projection object from the specified config.
-function get_projection( config ) {
+module.exports.get_projection = function get_projection( config ) {
   var
     proj_err = null,
     projection = null,
@@ -35,6 +35,4 @@ function get_projection( config ) {
     proj_err,
     projection,
   };
-}
-
-module.exports.get_projection = get_projection;
+};

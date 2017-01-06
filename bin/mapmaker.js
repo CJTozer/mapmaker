@@ -76,8 +76,12 @@ function build_map( spec_file ) {
 // Handy function for listing shape file data.
 function list_shape_info( spec_file ) {
   /* jshint validthis:true */
-  var cmd = this;
-  var mapbuilder;
+  var
+    cmd = this,
+    mapbuilder,
+    shape_elements,
+    columns;
+
   if ( program.debug ) {
     process.env.debug = true;
   }
@@ -95,10 +99,6 @@ function list_shape_info( spec_file ) {
         } );
       } else {
         // Tabulate the data.
-        var
-          shape_elements,
-          columns;
-
         // Use default columns if not given as an option.
         if ( !cmd.columns ) {
           cmd.columns = [ 'ADM0_A3', 'SU_A3', 'CONTINENT' ];
