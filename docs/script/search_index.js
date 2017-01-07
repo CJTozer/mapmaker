@@ -336,6 +336,12 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "libs/config/index.js",
+    "file/libs/config/index.js.html",
+    "libs/config/index.js",
+    "file"
+  ],
+  [
     "libs/map-builder/index.js",
     "file/libs/map-builder/index.js.html",
     "libs/map-builder/index.js",
