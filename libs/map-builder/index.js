@@ -299,7 +299,7 @@ class MapBuilder {
       }
     }
     // @@@ Get format from repo config?
-    utils.debug( 'ogr2ogr options', options );
+    utils.log.debug( 'ogr2ogr options', options );
     ogr2ogr( self.config.derived.shape_file )
       .format( 'GeoJSON' )
       .options( options )
