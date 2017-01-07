@@ -6,6 +6,7 @@ const
   assert = chai.assert,
   expect = chai.expect,
   fs = require( 'fs' ),
+  parseXML = require( 'xml2js' ).parseString,
   path = require( 'path' ),
   MapMaker = require( '..' );
 
@@ -31,8 +32,15 @@ describe( 'ExampleGeneration', function() {
           // Check we got some data
           assert.isAbove( data.length, 0 );
           expect( data ).to.not.be.empty;
-          // @@@ Check it's at least a valid SVG?
-          done();
+          parseXML( data, function( err, xml_obj ) {
+            expect( err ).to.be.null;
+            expect( xml_obj ).to.not.be.empty;
+            expect( xml_obj ).to.have.property( 'svg' );
+            expect( xml_obj ).to.have.deep.property( 'svg.path' );
+            expect( xml_obj ).to.have.deep.property( 'svg.path[0]' );
+            expect( xml_obj ).to.have.deep.property( 'svg.style' );
+            done();
+          } );
         } )
         .build_map();
     } );
