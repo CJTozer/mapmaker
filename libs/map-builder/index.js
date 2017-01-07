@@ -198,7 +198,8 @@ class MapBuilder {
     async.series( {
       build_config: ( callback ) => {
         console.log( chalk.bold.cyan( 'Building config...' ) );
-        self.build_config( callback, self.spec_file );
+        self.config = config.build_config( self.spec_file, self.spec_obj );
+        callback( null );
       },
       get_data_files: ( callback ) => {
         console.log( chalk.bold.cyan( 'Checking data sources...' ) );
