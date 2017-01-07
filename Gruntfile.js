@@ -61,7 +61,7 @@ module.exports = function( grunt ) {
       options: {
         spawn: false,
       },
-    }
+    },
   } );
 
   grunt.loadNpmTasks( 'gruntify-eslint' );
