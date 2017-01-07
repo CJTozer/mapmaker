@@ -52,7 +52,7 @@ function build_map( spec_file ) {
     mapbuilder;
 
   if ( program.debug ) {
-    process.env.debug = true;
+    process.env.DEBUG = true;
   }
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
@@ -83,7 +83,7 @@ function list_shape_info( spec_file ) {
     columns;
 
   if ( program.debug ) {
-    process.env.debug = true;
+    process.env.DEBUG = true;
   }
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
