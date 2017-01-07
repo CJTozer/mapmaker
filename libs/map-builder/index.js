@@ -3,7 +3,6 @@
 
 const
   async = require( 'async' ),
-  chalk = require( 'chalk' ),
   css = require( 'node-css' ),
   d3 = require( 'd3' ),
   download = require( 'download' ),
@@ -126,14 +125,14 @@ class MapBuilder {
     var self = this;
     async.series( {
       build_config: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Building config...' ) );
+        utils.log.progress( 'Building config...' );
         self.config = config.build_config( self.spec_file, self.spec_obj );
         callback( null );
       },
       check_for_existing_output: ( callback ) => {
         fs.readFile( self.config.derived.output_svg, function( err, data ) {
           if ( !err && !self.force ) {
-            console.log( chalk.bold.yellow( 'Output already generated: ' ) + self.config.derived.output_svg );
+            utils.log.info( 'Output already generated', self.config.derived.output_svg );
             self.output_exists = true;
             self.svg_text = data;
           }
@@ -142,7 +141,7 @@ class MapBuilder {
       },
       get_data_files: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Checking data sources...' ) );
+          utils.log.progress( 'Checking data sources...' );
           self.get_data_files( callback );
         } else {
           return callback( null );
@@ -150,7 +149,7 @@ class MapBuilder {
       },
       filter_data: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Filtering data...' ) );
+          utils.log.progress( 'Filtering data...' );
           self.filter_data( callback );
         } else {
           return callback( null );
@@ -158,7 +157,7 @@ class MapBuilder {
       },
       build_css: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Generating CSS...' ) );
+          utils.log.progress( 'Generating CSS...' );
           self.build_css( callback );
         } else {
           return callback( null );
@@ -166,7 +165,7 @@ class MapBuilder {
       },
       create_svg: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Creating SVG...' ) );
+          utils.log.progress( 'Creating SVG...' );
           self.create_svg( callback );
         } else {
           return callback( null );
@@ -174,12 +173,13 @@ class MapBuilder {
       },
     }, function( err ) {
       if ( err ) {
-        console.log( chalk.bold.red( 'Failed!  ' ) + err );
+        utils.log.error( 'Failed!' );
+        utils.log.error( err );
         if ( self.err_cb ) {
           self.err_cb( err );
         }
       } else {
-        console.log( chalk.bold.green( 'Map Building Complete!' ) );
+        utils.log.success( 'Map Building Complete!' );
         if ( self.ok_cb ) {
           self.ok_cb( self.svg_text );
         }
@@ -197,16 +197,16 @@ class MapBuilder {
     var self = this;
     async.series( {
       build_config: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Building config...' ) );
+        utils.log.progress( 'Building config...' );
         self.config = config.build_config( self.spec_file, self.spec_obj );
         callback( null );
       },
       get_data_files: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Checking data sources...' ) );
+        utils.log.progress( 'Checking data sources...' );
         self.get_data_files( callback );
       },
       get_shape_info: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Getting shape info...' ) );
+        utils.log.progress( 'Getting shape info...' );
         // @@@ Option to apply filter first.
         // @@@ Get format from repo config?
         ogr2ogr( self.config.derived.shape_file )
@@ -221,12 +221,13 @@ class MapBuilder {
       },
     }, function( err ) {
       if ( err ) {
-        console.log( chalk.bold.red( 'Failed!  ' ) + err );
+        utils.log.error( 'Failed!' );
+        utils.log.error( err );
         if ( self.err_cb ) {
           self.err_cb( err );
         }
       } else {
-        console.log( chalk.bold.green( 'Parsed shape info!' ) );
+        utils.log.success( 'Parsed shape info!' );
         if ( self.ok_cb ) {
           self.ok_cb( self.data );
         }
@@ -244,11 +245,11 @@ class MapBuilder {
     // Get the destination and check for existing data.
     fs.access( self.config.derived.shape_dir, ( err ) => {
       if ( !err ) {
-        console.log( chalk.bold.yellow( 'Data already available: ' ) + self.config.derived.shape_dir );
+        utils.log.info( 'Data already available', self.config.derived.shape_dir );
         return callback( null );
       } else {
         // Directory doesn't exist, proceed with download.
-        console.log( chalk.bold.cyan( 'Downloading data: ' ) + self.config.derived.download_url );
+        utils.log.progress( 'Downloading data', self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
           extract: true,
@@ -271,8 +272,8 @@ class MapBuilder {
       values,
       options = [],
       filter;
-    utils.debug( 'Countries config', self.config.parameters.countries );
-    utils.debug( 'Filter', self.config.parameters.filter );
+    utils.log.debug( 'Countries config', self.config.parameters.countries );
+    utils.log.debug( 'Filter', self.config.parameters.filter );
     filter = self.config.parameters.filter;
     if ( filter ) {
       switch ( filter.type ) {
@@ -329,7 +330,7 @@ class MapBuilder {
         }
       } );
     }
-    utils.debug( 'Generated CSS', self.css_string );
+    utils.log.debug( 'Generated CSS', self.css_string );
     return callback( null );
   }
 
@@ -390,11 +391,11 @@ class MapBuilder {
         self.svg_text = body.html();
         fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {
           if ( err ) {
-            console.log( err );
+            utils.log.error( err );
             return callback( err );
           }
 
-          console.log( 'Saved to ' + self.config.derived.output_svg );
+          utils.log.info( 'Saved to ' + self.config.derived.output_svg );
           return callback( null );
         } );
       }

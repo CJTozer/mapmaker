@@ -51,7 +51,7 @@ module.exports.build_config = function( spec_file, spec_obj ) {
 
   // Store off the config as a 'normal' object.
   config = built_config.get();
-  utils.debug( 'Full Config', config );
+  utils.log.debug( 'Full Config', config );
   return config;
 };
 

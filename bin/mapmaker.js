@@ -7,11 +7,12 @@ const
   program = require( 'commander' ),
   tabula = require( 'tabula' ),
   MapBuilder = require( '../libs/map-builder' ),
-  Utils = require( '../libs/utils' );
+  utils = require( '../libs/utils' );
 
 // Global options.
 program
-  .option( '-d, --debug', 'Extra debug information while building the mapbuilder' );
+  .option( '-d, --debug', 'Extra debug information while building the map' )
+  .option( '-q, --quiet', 'Don\'t print any output while building the map.  Overrides --debug.' );
 
 // Main map building script - calls build_map.
 program
@@ -26,7 +27,7 @@ program
 program
   .command( 'list' )
   .description( 'List the keys in the shape file used by the given spec file' )
-  .option( '-c, --columns <fields>', 'The fields to display.  Default: ADM0_A3,SU_A3', Utils.listSplit )
+  .option( '-c, --columns <fields>', 'The fields to display.  Default: ADM0_A3,SU_A3', utils.listSplit )
   .option( '-l, --list_columns', 'Show all columns in this data.' )
   .arguments( '<spec_file>', 'Config file containing the shape file info.  E.g. examples/france.yaml' )
   .action( list_shape_info );
@@ -50,9 +51,15 @@ function build_map( spec_file ) {
     cmd = this,
     mapbuilder;
 
-  if ( program.debug ) {
-    process.env.DEBUG = true;
+  // Set log level
+  if ( program.quiet ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.NONE;
+  } else if ( program.debug ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.DEBUG;
+  } else {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.INFO;
   }
+
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .force( cmd.force )
@@ -61,10 +68,10 @@ function build_map( spec_file ) {
     } )
     .onSuccess( ( data ) => {
       if ( cmd.test ) {
-        console.log( chalk.bold.cyan( 'Writing to test-site...' ) );
+        utils.log.progress( 'Writing to test-site...' );
         fs.writeFile( 'test-site/map_data.svg', data, function( err ) {
           if ( err ) {
-            console.log( chalk.bold.red( err ) );
+            utils.log.error( err );
           }
         } );
       }
@@ -81,9 +88,15 @@ function list_shape_info( spec_file ) {
     shape_elements,
     columns;
 
-  if ( program.debug ) {
-    process.env.DEBUG = true;
+  // Set log level
+  if ( program.quiet ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.NONE;
+  } else if ( program.debug ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.DEBUG;
+  } else {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.INFO;
   }
+
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .onError( ( err ) => {
@@ -92,9 +105,9 @@ function list_shape_info( spec_file ) {
     .onSuccess( ( data ) => {
       if ( cmd.list_columns ) {
         // Just list all properties in first data element.
-        console.log( chalk.bold.magenta( 'All data properties:' ) );
+        utils.log.info( 'All data properties:' );
         Object.keys( data.features[ 0 ].properties ).forEach( ( p ) => {
-          console.log( p );
+          utils.log.output( p );
         } );
       } else {
         // Tabulate the data.
