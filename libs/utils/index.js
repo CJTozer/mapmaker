@@ -7,7 +7,7 @@ const chalk = require( 'chalk' );
 module.exports.debug = function debug( tag, obj ) {
   var
     str;
-  if ( process.env.debug ) {
+  if ( process.env.DEBUG ) {
     if ( !obj ) {
       obj = tag;
       tag = 'Debug:';
