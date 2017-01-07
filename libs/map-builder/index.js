@@ -4,17 +4,14 @@
 const
   async = require( 'async' ),
   chalk = require( 'chalk' ),
-  Config = require( 'merge-config' ),
   css = require( 'node-css' ),
   d3 = require( 'd3' ),
   download = require( 'download' ),
   fs = require( 'fs-extra' ),
-  hash = require( 'object-hash' ),
   jsdom = require( 'jsdom' ),
   ogr2ogr = require( 'ogr2ogr' ),
-  path = require( 'path' ),
+  config = require( '../config' ),
   projections = require( '../projections' ),
-  urljoin = require( 'url-join' ),
   utils = require( '../utils' );
 
 /**
@@ -130,7 +127,8 @@ class MapBuilder {
     async.series( {
       build_config: ( callback ) => {
         console.log( chalk.bold.cyan( 'Building config...' ) );
-        self.build_config( callback, self.spec_file );
+        self.config = config.build_config( self.spec_file, self.spec_obj );
+        callback( null );
       },
       check_for_existing_output: ( callback ) => {
         fs.readFile( self.config.derived.output_svg, function( err, data ) {
@@ -233,58 +231,6 @@ class MapBuilder {
         }
       }
     } );
-  }
-
-  /**
-   * Build up the configuration.
-   * @access private
-   */
-  // @@@ TODO move this to libs/config
-  build_config( callback ) {
-    var
-      self = this,
-      built_config,
-      shape_data,
-      file_base,
-      shape_dir,
-      repo_info,
-      sha;
-
-    // Get the global defaults then override with the specified specification.
-    built_config = new Config();
-    built_config.file( path.join( __dirname, '..', '..', 'defaults.yaml' ) );
-    if ( self.spec_file ) {
-      built_config.file( self.spec_file );
-    }
-    if ( self.spec_obj ) {
-      built_config.merge( self.spec_obj );
-    }
-    utils.debug( 'Pure Config', self.config );
-
-    // Set up derived config values:
-    // - Download dirs and shapefile name
-    shape_data = built_config.get( 'shape_data' );
-    file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( '.' ) ) || shape_data.filename;
-    shape_dir = path.join( 'data', shape_data.repo, shape_data.base, file_base );
-    built_config.set( 'derived:shape_dir', shape_dir );
-    built_config.set( 'derived:shape_file', path.join( shape_dir, file_base + '.shp' ) );
-
-    // - Info for the current repo
-    repo_info = built_config.get( 'repos' )[ shape_data.repo ];
-    built_config.set( 'derived:repo_info', repo_info );
-
-    // - Download target
-    built_config.set( 'derived:download_url', urljoin( repo_info.base_url, shape_data.base, shape_data.filename ) );
-
-    // - SHA of the spec file, and output file.
-    sha = hash( built_config.get() );
-    built_config.set( 'derived:spec_sha1', sha );
-    built_config.set( 'derived:output_svg', path.join( 'output', sha + '.svg' ) );
-
-    // Store off the config as a 'normal' object.
-    self.config = built_config.get();
-    utils.debug( 'Full Config', self.config );
-    return callback( null );
   }
 
   /**

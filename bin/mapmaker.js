@@ -29,7 +29,6 @@ program
   .option( '-c, --columns <fields>', 'The fields to display.  Default: ADM0_A3,SU_A3', Utils.listSplit )
   .option( '-l, --list_columns', 'Show all columns in this data.' )
   .arguments( '<spec_file>', 'Config file containing the shape file info.  E.g. examples/france.yaml' )
-  // @@@ Option to list specific keys only (or to get a list of valid keys - no values?).
   .action( list_shape_info );
 
 // Catch-all for unrecognized sub-command (so show help).
