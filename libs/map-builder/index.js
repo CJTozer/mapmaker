@@ -284,6 +284,13 @@ class MapBuilder {
         values = Object.keys( self.config.parameters.countries ).join( '\', \'' );
         options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
         break;
+      case 'array':
+        if ( !filter.array ) {
+          return callback( 'Cannot filter on array with no elements specified' );
+        }
+        values = filter.array.join( '\', \'' );
+        options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
+        break;
       case 'all':
           // Include all countries - no filter
         break;
@@ -292,6 +299,7 @@ class MapBuilder {
       }
     }
     // @@@ Get format from repo config?
+    utils.debug( 'ogr2ogr options', options );
     ogr2ogr( self.config.derived.shape_file )
       .format( 'GeoJSON' )
       .options( options )
