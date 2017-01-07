@@ -298,7 +298,7 @@ class MapBuilder {
     if ( self.spec_obj ) {
       built_config.merge( self.spec_obj );
     }
-    utils.debug( &apos;Pure Config&apos;, self.config );
+    utils.log.debug( &apos;Pure Config&apos;, self.config );
 
     // Set up derived config values:
     // - Download dirs and shapefile name
@@ -322,7 +322,7 @@ class MapBuilder {
 
     // Store off the config as a &apos;normal&apos; object.
     self.config = built_config.get();
-    utils.debug( &apos;Full Config&apos;, self.config );
+    utils.log.debug( &apos;Full Config&apos;, self.config );
     return callback( null );
   }
 
@@ -363,8 +363,8 @@ class MapBuilder {
       values,
       options = [],
       filter;
-    utils.debug( &apos;Countries config&apos;, self.config.parameters.countries );
-    utils.debug( &apos;Filter&apos;, self.config.parameters.filter );
+    utils.log.debug( &apos;Countries config&apos;, self.config.parameters.countries );
+    utils.log.debug( &apos;Filter&apos;, self.config.parameters.filter );
     filter = self.config.parameters.filter;
     if ( filter ) {
       switch ( filter.type ) {
@@ -421,7 +421,7 @@ class MapBuilder {
         }
       } );
     }
-    utils.debug( &apos;Generated CSS&apos;, self.css_string );
+    utils.log.debug( &apos;Generated CSS&apos;, self.css_string );
     return callback( null );
   }
 

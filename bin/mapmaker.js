@@ -6,11 +6,13 @@ const
   fs = require( 'fs-extra' ),
   program = require( 'commander' ),
   tabula = require( 'tabula' ),
-  MapBuilder = require( '../libs/map-builder' );
+  MapBuilder = require( '../libs/map-builder' ),
+  utils = require( '../libs/utils' );
 
 // Global options.
 program
-  .option( '-d, --debug', 'Extra debug information while building the mapbuilder' );
+  .option( '-d, --debug', 'Extra debug information while building the map' )
+  .option( '-q, --quiet', 'Don\'t print any output while building the map.  Overrides --debug.' );
 
 // Main map building script - calls build_map.
 program
@@ -25,8 +27,9 @@ program
 program
   .command( 'list' )
   .description( 'List the keys in the shape file used by the given spec file' )
+  .option( '-c, --columns <fields>', 'The fields to display.  Default: ADM0_A3,SU_A3', utils.listSplit )
+  .option( '-l, --list_columns', 'Show all columns in this data.' )
   .arguments( '<spec_file>', 'Config file containing the shape file info.  E.g. examples/france.yaml' )
-  // @@@ Option to list specific keys only (or to get a list of valid keys - no values?).
   .action( list_shape_info );
 
 // Catch-all for unrecognized sub-command (so show help).
@@ -48,9 +51,15 @@ function build_map( spec_file ) {
     cmd = this,
     mapbuilder;
 
-  if ( program.debug ) {
-    process.env.debug = true;
+  // Set log level
+  if ( program.quiet ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.NONE;
+  } else if ( program.debug ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.DEBUG;
+  } else {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.INFO;
   }
+
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .force( cmd.force )
@@ -59,10 +68,10 @@ function build_map( spec_file ) {
     } )
     .onSuccess( ( data ) => {
       if ( cmd.test ) {
-        console.log( chalk.bold.cyan( 'Writing to test-site...' ) );
+        utils.log.progress( 'Writing to test-site...' );
         fs.writeFile( 'test-site/map_data.svg', data, function( err ) {
           if ( err ) {
-            console.log( chalk.bold.red( err ) );
+            utils.log.error( err );
           }
         } );
       }
@@ -72,33 +81,56 @@ function build_map( spec_file ) {
 
 // Handy function for listing shape file data.
 function list_shape_info( spec_file ) {
-  // var cmd = this;
-  var mapbuilder;
-  if ( program.debug ) {
-    process.env.debug = true;
+  /* jshint validthis:true */
+  var
+    cmd = this,
+    mapbuilder,
+    shape_elements,
+    columns;
+
+  // Set log level
+  if ( program.quiet ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.NONE;
+  } else if ( program.debug ) {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.DEBUG;
+  } else {
+    process.env.LOG_LEVEL = utils.LOG_LEVEL.INFO;
   }
+
   mapbuilder = new MapBuilder()
     .specFile( spec_file )
     .onError( ( err ) => {
       throw new Error( err );
     } )
     .onSuccess( ( data ) => {
-      // Tabulate the data.
-      var shape_elements = data.features.map( ( x ) => {
-        return x.properties;
-      } );
-      tabula( shape_elements, {
-        // @@@ Get columns from a command option.
-        columns: [ {
-          lookup: 'NAME_LONG',
-          name: chalk.bold.magenta( 'Name' ),
-        }, {
-          lookup: 'ADM0_A3',
-          name: chalk.bold.magenta( 'ADM0_A3' ),
-        } ],
-      } );
-      // @@@ Option to just list keys.
-      // console.log(data.features[0]);
+      if ( cmd.list_columns ) {
+        // Just list all properties in first data element.
+        utils.log.info( 'All data properties:' );
+        Object.keys( data.features[ 0 ].properties ).forEach( ( p ) => {
+          utils.log.output( p );
+        } );
+      } else {
+        // Tabulate the data.
+        // Use default columns if not given as an option.
+        if ( !cmd.columns ) {
+          cmd.columns = [ 'ADM0_A3', 'SU_A3', 'CONTINENT' ];
+        }
+        columns = cmd.columns.map( ( x ) => {
+          return {
+            lookup: x,
+            name: chalk.bold.magenta( x ),
+          };
+        } );
+        shape_elements = data.features.map( ( x ) => {
+          return x.properties;
+        } );
+        tabula( shape_elements, {
+          columns: [ {
+            lookup: 'NAME_LONG',
+            name: chalk.bold.magenta( 'Name' ),
+          } ].concat( columns ),
+        } );
+      }
     } );
   mapbuilder.get_shape_info();
 }

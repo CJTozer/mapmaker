@@ -3,18 +3,14 @@
 
 const
   async = require( 'async' ),
-  chalk = require( 'chalk' ),
-  Config = require( 'merge-config' ),
   css = require( 'node-css' ),
   d3 = require( 'd3' ),
   download = require( 'download' ),
   fs = require( 'fs-extra' ),
-  hash = require( 'object-hash' ),
   jsdom = require( 'jsdom' ),
   ogr2ogr = require( 'ogr2ogr' ),
-  path = require( 'path' ),
+  config = require( '../config' ),
   projections = require( '../projections' ),
-  urljoin = require( 'url-join' ),
   utils = require( '../utils' );
 
 /**
@@ -129,13 +125,14 @@ class MapBuilder {
     var self = this;
     async.series( {
       build_config: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Building config...' ) );
-        self.build_config( callback, self.spec_file );
+        utils.log.progress( 'Building config...' );
+        self.config = config.build_config( self.spec_file, self.spec_obj );
+        callback( null );
       },
       check_for_existing_output: ( callback ) => {
         fs.readFile( self.config.derived.output_svg, function( err, data ) {
           if ( !err && !self.force ) {
-            console.log( chalk.bold.yellow( 'Output already generated: ' ) + self.config.derived.output_svg );
+            utils.log.info( 'Output already generated', self.config.derived.output_svg );
             self.output_exists = true;
             self.svg_text = data;
           }
@@ -144,7 +141,7 @@ class MapBuilder {
       },
       get_data_files: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Checking data sources...' ) );
+          utils.log.progress( 'Checking data sources...' );
           self.get_data_files( callback );
         } else {
           return callback( null );
@@ -152,7 +149,7 @@ class MapBuilder {
       },
       filter_data: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Filtering data...' ) );
+          utils.log.progress( 'Filtering data...' );
           self.filter_data( callback );
         } else {
           return callback( null );
@@ -160,7 +157,7 @@ class MapBuilder {
       },
       build_css: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Generating CSS...' ) );
+          utils.log.progress( 'Generating CSS...' );
           self.build_css( callback );
         } else {
           return callback( null );
@@ -168,7 +165,7 @@ class MapBuilder {
       },
       create_svg: ( callback ) => {
         if ( !self.output_exists ) {
-          console.log( chalk.bold.cyan( 'Creating SVG...' ) );
+          utils.log.progress( 'Creating SVG...' );
           self.create_svg( callback );
         } else {
           return callback( null );
@@ -176,12 +173,13 @@ class MapBuilder {
       },
     }, function( err ) {
       if ( err ) {
-        console.log( chalk.bold.red( 'Failed!  ' ) + err );
+        utils.log.error( 'Failed!' );
+        utils.log.error( err );
         if ( self.err_cb ) {
           self.err_cb( err );
         }
       } else {
-        console.log( chalk.bold.green( 'Map Building Complete!' ) );
+        utils.log.success( 'Map Building Complete!' );
         if ( self.ok_cb ) {
           self.ok_cb( self.svg_text );
         }
@@ -199,15 +197,16 @@ class MapBuilder {
     var self = this;
     async.series( {
       build_config: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Building config...' ) );
-        self.build_config( callback, self.spec_file );
+        utils.log.progress( 'Building config...' );
+        self.config = config.build_config( self.spec_file, self.spec_obj );
+        callback( null );
       },
       get_data_files: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Checking data sources...' ) );
+        utils.log.progress( 'Checking data sources...' );
         self.get_data_files( callback );
       },
       get_shape_info: ( callback ) => {
-        console.log( chalk.bold.cyan( 'Getting shape info...' ) );
+        utils.log.progress( 'Getting shape info...' );
         // @@@ Option to apply filter first.
         // @@@ Get format from repo config?
         ogr2ogr( self.config.derived.shape_file )
@@ -222,68 +221,18 @@ class MapBuilder {
       },
     }, function( err ) {
       if ( err ) {
-        console.log( chalk.bold.red( 'Failed!  ' ) + err );
+        utils.log.error( 'Failed!' );
+        utils.log.error( err );
         if ( self.err_cb ) {
           self.err_cb( err );
         }
       } else {
-        console.log( chalk.bold.green( 'Parsed shape info!' ) );
+        utils.log.success( 'Parsed shape info!' );
         if ( self.ok_cb ) {
           self.ok_cb( self.data );
         }
       }
     } );
-  }
-
-  /**
-   * Build up the configuration.
-   * @access private
-   */
-  build_config( callback ) {
-    var
-      self = this,
-      built_config,
-      shape_data,
-      file_base,
-      shape_dir,
-      repo_info,
-      sha;
-
-    // Get the global defaults then override with the specified specification.
-    built_config = new Config();
-    built_config.file( path.join( __dirname, '..', '..', 'defaults.yaml' ) );
-    if ( self.spec_file ) {
-      built_config.file( self.spec_file );
-    }
-    if ( self.spec_obj ) {
-      built_config.merge( self.spec_obj );
-    }
-    utils.debug( 'Pure Config', self.config );
-
-    // Set up derived config values:
-    // - Download dirs and shapefile name
-    shape_data = built_config.get( 'shape_data' );
-    file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( '.' ) ) || shape_data.filename;
-    shape_dir = path.join( 'data', shape_data.repo, shape_data.base, file_base );
-    built_config.set( 'derived:shape_dir', shape_dir );
-    built_config.set( 'derived:shape_file', path.join( shape_dir, file_base + '.shp' ) );
-
-    // - Info for the current repo
-    repo_info = built_config.get( 'repos' )[ shape_data.repo ];
-    built_config.set( 'derived:repo_info', repo_info );
-
-    // - Download target
-    built_config.set( 'derived:download_url', urljoin( repo_info.base_url, shape_data.base, shape_data.filename ) );
-
-    // - SHA of the spec file, and output file.
-    sha = hash( built_config.get() );
-    built_config.set( 'derived:spec_sha1', sha );
-    built_config.set( 'derived:output_svg', path.join( 'output', sha + '.svg' ) );
-
-    // Store off the config as a 'normal' object.
-    self.config = built_config.get();
-    utils.debug( 'Full Config', self.config );
-    return callback( null );
   }
 
   /**
@@ -296,11 +245,11 @@ class MapBuilder {
     // Get the destination and check for existing data.
     fs.access( self.config.derived.shape_dir, ( err ) => {
       if ( !err ) {
-        console.log( chalk.bold.yellow( 'Data already available: ' ) + self.config.derived.shape_dir );
+        utils.log.info( 'Data already available', self.config.derived.shape_dir );
         return callback( null );
       } else {
         // Directory doesn't exist, proceed with download.
-        console.log( chalk.bold.cyan( 'Downloading data: ' ) + self.config.derived.download_url );
+        utils.log.progress( 'Downloading data', self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
           extract: true,
@@ -323,8 +272,8 @@ class MapBuilder {
       values,
       options = [],
       filter;
-    utils.debug( 'Countries config', self.config.parameters.countries );
-    utils.debug( 'Filter', self.config.parameters.filter );
+    utils.log.debug( 'Countries config', self.config.parameters.countries );
+    utils.log.debug( 'Filter', self.config.parameters.filter );
     filter = self.config.parameters.filter;
     if ( filter ) {
       switch ( filter.type ) {
@@ -335,6 +284,13 @@ class MapBuilder {
         values = Object.keys( self.config.parameters.countries ).join( '\', \'' );
         options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
         break;
+      case 'array':
+        if ( !filter.array ) {
+          return callback( 'Cannot filter on array with no elements specified' );
+        }
+        values = filter.array.join( '\', \'' );
+        options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
+        break;
       case 'all':
           // Include all countries - no filter
         break;
@@ -343,6 +299,7 @@ class MapBuilder {
       }
     }
     // @@@ Get format from repo config?
+    utils.log.debug( 'ogr2ogr options', options );
     ogr2ogr( self.config.derived.shape_file )
       .format( 'GeoJSON' )
       .options( options )
@@ -381,7 +338,7 @@ class MapBuilder {
         }
       } );
     }
-    utils.debug( 'Generated CSS', self.css_string );
+    utils.log.debug( 'Generated CSS', self.css_string );
     return callback( null );
   }
 
@@ -442,11 +399,11 @@ class MapBuilder {
         self.svg_text = body.html();
         fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {
           if ( err ) {
-            console.log( err );
+            utils.log.error( err );
             return callback( err );
           }
 
-          console.log( 'Saved to ' + self.config.derived.output_svg );
+          utils.log.info( 'Saved to ' + self.config.derived.output_svg );
           return callback( null );
         } );
       }
