@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-'use strict';
+
+const stylish = require( 'jshint-stylish' );
 
 module.exports = function( grunt ) {
   grunt.initConfig( {
@@ -19,7 +20,7 @@ module.exports = function( grunt ) {
         'test/**/*.js',
       ],
       options: {
-        reporter: require( 'jshint-stylish' ),
+        reporter: stylish,
         jshintrc: '.jshintrc',
       },
     },

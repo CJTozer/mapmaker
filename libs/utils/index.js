@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-'use strict';
 
-const
-  chalk = require( 'chalk' ),
-  LOG_LEVEL = {
-    NONE: 0,
-    INFO: 1,
-    DEBUG: 3,
-  };
+const chalk = require( 'chalk' );
+
+const LOG_LEVEL = {
+  NONE: 0,
+  INFO: 1,
+  DEBUG: 3,
+};
 
 // Export Log levels
 module.exports.LOG_LEVEL = LOG_LEVEL;
@@ -32,20 +31,18 @@ class Logger {
   static progress( tag, str ) {
     if ( process.env.LOG_LEVEL >= LOG_LEVEL.INFO ) {
       if ( !str ) {
-        str = tag;
-        console.log( chalk.bold.cyan( str ) );
+        console.log( chalk.bold.cyan( tag ) );
       } else {
-        console.log( chalk.bold.cyan( tag ) + ' : ' + str );
+        console.log( `${chalk.bold.cyan( tag )} : ${str}` );
       }
     }
   }
   static info( tag, str ) {
     if ( process.env.LOG_LEVEL >= LOG_LEVEL.INFO ) {
       if ( !str ) {
-        str = tag;
-        console.log( chalk.bold.yellow( str ) );
+        console.log( chalk.bold.yellow( tag ) );
       } else {
-        console.log( chalk.bold.yellow( tag ) + ' ' + str );
+        console.log( `${chalk.bold.yellow( tag )} ${str}` );
       }
     }
   }
@@ -56,9 +53,10 @@ class Logger {
   }
 
   // Debug log
-  static debug( tag, obj ) {
-    var
-      str;
+  static debug( tag_parm, obj_parm ) {
+    let str;
+    let obj = obj_parm;
+    let tag = tag_parm;
     if ( process.env.LOG_LEVEL >= LOG_LEVEL.DEBUG ) {
       if ( !obj ) {
         obj = tag;
