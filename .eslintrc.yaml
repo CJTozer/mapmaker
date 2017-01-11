@@ -21,3 +21,8 @@ rules:
       uninitialized: always
   camelcase: off
   consistent-return: warn
+  # Allow parameter objects to have properties set
+  no-param-reassign:
+    - error
+    -
+      props: false
