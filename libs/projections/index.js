@@ -1,22 +1,21 @@
 #!/usr/bin/env node
-'use strict';
 
 const d3 = require( 'd3' );
 
 // Get the projection object from the specified config.
 module.exports.get_projection = function get_projection( config ) {
-  var
-    proj_err = null,
-    projection = null,
-    proj_type = config.parameters.projection.type.toLowerCase();
+  const proj_type = config.parameters.projection.type.toLowerCase();
+  let proj_err = null;
+  let projection = null;
+
   switch ( proj_type ) {
   case 'mercator':
     projection = d3.geoMercator();
     break;
   case 'albers':
-    // @@@ Get parallels from config?
+      // @@@ Get parallels from config?
     projection = d3.geoAlbers()
-      .parallels( [ 50, 60 ] );
+        .parallels( [ 50, 60 ] );
     break;
   default:
     proj_err = `Unrecognized projection "${proj_type}""`;

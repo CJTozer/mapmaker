@@ -1,12 +1,28 @@
-extends: idiomatic
+extends:
+  # Airbnb rules
+  - airbnb
+  # Idiomatic for layout only
+  - idiomatic/core
 env:
   node: true
 rules:
   no-console: off
-  func-names: 0
+  func-names: off
   comma-dangle:
     - error
     - always-multiline
   semi:
     - error
     - always
+  one-var:
+    - error
+    -
+      initialized: never
+      uninitialized: always
+  camelcase: off
+  consistent-return: warn
+  # Allow parameter objects to have properties set
+  no-param-reassign:
+    - error
+    -
+      props: false

@@ -1,17 +1,15 @@
 #!/usr/bin/env node
-'use strict';
 
-const
-  async = require( 'async' ),
-  css = require( 'node-css' ),
-  d3 = require( 'd3' ),
-  download = require( 'download' ),
-  fs = require( 'fs-extra' ),
-  jsdom = require( 'jsdom' ),
-  ogr2ogr = require( 'ogr2ogr' ),
-  config = require( '../config' ),
-  projections = require( '../projections' ),
-  utils = require( '../utils' );
+const async = require( 'async' );
+const css = require( 'node-css' );
+const d3 = require( 'd3' );
+const download = require( 'download' );
+const fs = require( 'fs-extra' );
+const jsdom = require( 'jsdom' );
+const ogr2ogr = require( 'ogr2ogr' );
+const config = require( '../config' );
+const projections = require( '../projections' );
+const utils = require( '../utils' );
 
 /**
  * Class for encapsulating a map building operation.
@@ -29,7 +27,7 @@ const
  */
 class MapBuilder {
   constructor() {
-    var self = this;
+    const self = this;
     self.config = {};
     self.data = {};
     self.spec_obj = {};
@@ -52,7 +50,8 @@ class MapBuilder {
   /**
    * Specify a success callback for this {@link MapBuilder}.
    *
-   * @param {function(data: string)} ok_cb - the success callback, passed the generated SVG as a string.
+   * @param {function(data: string)} ok_cb - the success callback, passed the
+   *                                         generated SVG as a string.
    */
   onSuccess( ok_cb ) {
     this.ok_cb = ok_cb;
@@ -122,7 +121,7 @@ class MapBuilder {
    * results.
    */
   build_map() {
-    var self = this;
+    const self = this;
     async.series( {
       build_config: ( callback ) => {
         utils.log.progress( 'Building config...' );
@@ -130,7 +129,7 @@ class MapBuilder {
         callback( null );
       },
       check_for_existing_output: ( callback ) => {
-        fs.readFile( self.config.derived.output_svg, function( err, data ) {
+        fs.readFile( self.config.derived.output_svg, ( err, data ) => {
           if ( !err && !self.force ) {
             utils.log.info( 'Output already generated', self.config.derived.output_svg );
             self.output_exists = true;
@@ -144,7 +143,7 @@ class MapBuilder {
           utils.log.progress( 'Checking data sources...' );
           self.get_data_files( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       filter_data: ( callback ) => {
@@ -152,7 +151,7 @@ class MapBuilder {
           utils.log.progress( 'Filtering data...' );
           self.filter_data( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       build_css: ( callback ) => {
@@ -160,7 +159,7 @@ class MapBuilder {
           utils.log.progress( 'Generating CSS...' );
           self.build_css( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       create_svg: ( callback ) => {
@@ -168,10 +167,10 @@ class MapBuilder {
           utils.log.progress( 'Creating SVG...' );
           self.create_svg( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
-    }, function( err ) {
+    }, ( err ) => {
       if ( err ) {
         utils.log.error( 'Failed!' );
         utils.log.error( err );
@@ -194,7 +193,7 @@ class MapBuilder {
    * results.
    */
   get_shape_info() {
-    var self = this;
+    const self = this;
     async.series( {
       build_config: ( callback ) => {
         utils.log.progress( 'Building config...' );
@@ -211,7 +210,7 @@ class MapBuilder {
         // @@@ Get format from repo config?
         ogr2ogr( self.config.derived.shape_file )
           .format( 'GeoJSON' )
-          .exec( function( err, geo_data ) {
+          .exec( ( err, geo_data ) => {
             if ( err ) {
               return callback( err );
             }
@@ -219,7 +218,7 @@ class MapBuilder {
             return callback( null );
           } );
       },
-    }, function( err ) {
+    }, ( err ) => {
       if ( err ) {
         utils.log.error( 'Failed!' );
         utils.log.error( err );
@@ -240,24 +239,20 @@ class MapBuilder {
    * @access private
    */
   get_data_files( callback ) {
-    var self = this;
+    const self = this;
 
     // Get the destination and check for existing data.
     fs.access( self.config.derived.shape_dir, ( err ) => {
       if ( !err ) {
         utils.log.info( 'Data already available', self.config.derived.shape_dir );
-        return callback( null );
+        callback( null );
       } else {
         // Directory doesn't exist, proceed with download.
         utils.log.progress( 'Downloading data', self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
           extract: true,
-        } ).then( () => {
-          return callback( null );
-        }, ( err ) => {
-          return callback( err );
-        } );
+        } ).then( () => callback( null ), dl_err => callback( dl_err ) );
       }
     } );
   }
@@ -267,14 +262,12 @@ class MapBuilder {
    * @access private
    */
   filter_data( callback ) {
-    var
-      self = this,
-      values,
-      options = [],
-      filter;
+    const self = this;
+    let options = [];
+    let values;
     utils.log.debug( 'Countries config', self.config.parameters.countries );
     utils.log.debug( 'Filter', self.config.parameters.filter );
-    filter = self.config.parameters.filter;
+    const filter = self.config.parameters.filter;
     if ( filter ) {
       switch ( filter.type ) {
       case 'countries':
@@ -282,14 +275,14 @@ class MapBuilder {
           return callback( 'Cannot filter on countries with no countries specified - use "type: all"' );
         }
         values = Object.keys( self.config.parameters.countries ).join( '\', \'' );
-        options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
+        options = options.concat( [ '-where', `${filter.key} IN ('${values}')` ] );
         break;
       case 'array':
         if ( !filter.array ) {
           return callback( 'Cannot filter on array with no elements specified' );
         }
         values = filter.array.join( '\', \'' );
-        options = options.concat( [ '-where', `${filter.key} IN (\'${values}\')` ] );
+        options = options.concat( [ '-where', `${filter.key} IN ('${values}')` ] );
         break;
       case 'all':
           // Include all countries - no filter
@@ -303,7 +296,7 @@ class MapBuilder {
     ogr2ogr( self.config.derived.shape_file )
       .format( 'GeoJSON' )
       .options( options )
-      .exec( function( err, geo_data ) {
+      .exec( ( err, geo_data ) => {
         if ( err ) {
           return callback( err );
         }
@@ -317,22 +310,20 @@ class MapBuilder {
    * @access private
    */
   build_css( callback ) {
-    var
-      self = this,
-      base_style = self.config.style,
-      countries;
+    const self = this;
+    const base_style = self.config.style;
     Object.keys( base_style ).forEach( ( key ) => {
-      var data = base_style[ key ];
+      const data = base_style[ key ];
       if ( data ) {
         self.css_string += css( key, data );
       }
     } );
 
     // Per-country CSS.
-    countries = self.config.parameters.countries;
+    const countries = self.config.parameters.countries;
     if ( countries ) {
       Object.keys( countries ).forEach( ( key ) => {
-        var data = countries[ key ];
+        const data = countries[ key ];
         if ( data ) {
           self.css_string += css( `.ADM0_A3-${key}`, data );
         }
@@ -347,45 +338,39 @@ class MapBuilder {
    * @access private
    */
   create_svg( callback ) {
-    var self = this;
+    const self = this;
     // Use jsdom to create a fake DOM to work in.
     jsdom.env( '<body />',
-      function( err, window ) {
-        var
-          body,
-          svg,
-          path;
+      ( err, window ) => {
         if ( err ) {
           return callback( err );
         }
 
         // Create an SVG element for the map.
-        body = d3.select( window.document ).select( 'body' );
-        svg = body.append( 'svg' )
+        const body = d3.select( window.document ).select( 'body' );
+        const svg = body.append( 'svg' )
           .attr( 'width', self.config.parameters.projection.width )
           .attr( 'height', self.config.parameters.projection.height );
 
-        let {
+        const {
           proj_err,
           projection,
         } = projections.get_projection( self.config );
         if ( proj_err ) {
           return callback( proj_err );
         }
-        path = d3.geoPath()
+        const path = d3.geoPath()
           .projection( projection );
 
         // Add an appropriate class to each country.
         svg.selectAll( '.country' )
           .data( self.data.features )
           .enter().append( 'path' )
-          .attr( 'class', function( d ) {
-            return [
-              'ADM0_A3-' + d.properties.ADM0_A3,
-              'SU_A3-' + d.properties.SU_A3,
-              'GU_A3-' + d.properties.GU_A3,
-            ].join( ' ' );
-          } )
+          .attr( 'class', d => [
+            `ADM0_A3-${d.properties.ADM0_A3}`,
+            `SU_A3-${d.properties.SU_A3}`,
+            `GU_A3-${d.properties.GU_A3}`,
+          ].join( ' ' ) )
           .attr( 'd', path );
 
         // Add in the CSS style.
@@ -397,13 +382,13 @@ class MapBuilder {
           fs.mkdirSync( 'output' );
         }
         self.svg_text = body.html();
-        fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {
-          if ( err ) {
-            utils.log.error( err );
-            return callback( err );
+        fs.writeFile( self.config.derived.output_svg, self.svg_text, ( write_err ) => {
+          if ( write_err ) {
+            utils.log.error( write_err );
+            return callback( write_err );
           }
 
-          utils.log.info( 'Saved to ' + self.config.derived.output_svg );
+          utils.log.info( `Saved to ${self.config.derived.output_svg}` );
           return callback( null );
         } );
       }
