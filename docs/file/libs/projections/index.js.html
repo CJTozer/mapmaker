@@ -39,24 +39,23 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/projections/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-&apos;use strict&apos;;
 
 const d3 = require( &apos;d3&apos; );
 
 // Get the projection object from the specified config.
 module.exports.get_projection = function get_projection( config ) {
-  var
-    proj_err = null,
-    projection = null,
-    proj_type = config.parameters.projection.type.toLowerCase();
+  const proj_type = config.parameters.projection.type.toLowerCase();
+  let proj_err = null;
+  let projection = null;
+
   switch ( proj_type ) {
   case &apos;mercator&apos;:
     projection = d3.geoMercator();
     break;
   case &apos;albers&apos;:
-    // @@@ Get parallels from config?
+      // @@@ Get parallels from config?
     projection = d3.geoAlbers()
-      .parallels( [ 50, 60 ] );
+        .parallels( [ 50, 60 ] );
     break;
   default:
     proj_err = `Unrecognized projection &quot;${proj_type}&quot;&quot;`;

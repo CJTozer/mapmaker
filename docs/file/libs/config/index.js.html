@@ -39,28 +39,17 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/config/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-&apos;use strict&apos;;
 
-const
-  Config = require( &apos;merge-config&apos; ),
-  hash = require( &apos;object-hash&apos; ),
-  path = require( &apos;path&apos; ),
-  urljoin = require( &apos;url-join&apos; ),
-  utils = require( &apos;../utils&apos; );
+const Config = require( &apos;merge-config&apos; );
+const hash = require( &apos;object-hash&apos; );
+const path = require( &apos;path&apos; );
+const urljoin = require( &apos;url-join&apos; );
+const utils = require( &apos;../utils&apos; );
 
 // Build up a configuration object from a spec file and/or spec object.
 module.exports.build_config = function( spec_file, spec_obj ) {
-  var
-    built_config,
-    config,
-    shape_data,
-    file_base,
-    shape_dir,
-    repo_info,
-    sha;
-
   // Get the global defaults then override with the specified specification.
-  built_config = new Config();
+  const built_config = new Config();
   built_config.file( path.join( __dirname, &apos;..&apos;, &apos;..&apos;, &apos;defaults.yaml&apos; ) );
   if ( spec_file ) {
     built_config.file( spec_file );
@@ -71,26 +60,26 @@ module.exports.build_config = function( spec_file, spec_obj ) {
 
   // Set up derived config values:
   // - Download dirs and shapefile name
-  shape_data = built_config.get( &apos;shape_data&apos; );
-  file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( &apos;.&apos; ) ) || shape_data.filename;
-  shape_dir = path.join( &apos;data&apos;, shape_data.repo, shape_data.base, file_base );
+  const shape_data = built_config.get( &apos;shape_data&apos; );
+  const file_base = shape_data.filename.substr( 0, shape_data.filename.lastIndexOf( &apos;.&apos; ) ) || shape_data.filename;
+  const shape_dir = path.join( &apos;data&apos;, shape_data.repo, shape_data.base, file_base );
   built_config.set( &apos;derived:shape_dir&apos;, shape_dir );
-  built_config.set( &apos;derived:shape_file&apos;, path.join( shape_dir, file_base + &apos;.shp&apos; ) );
+  built_config.set( &apos;derived:shape_file&apos;, path.join( shape_dir, `${file_base}.shp` ) );
 
   // - Info for the current repo
-  repo_info = built_config.get( &apos;repos&apos; )[ shape_data.repo ];
+  const repo_info = built_config.get( &apos;repos&apos; )[ shape_data.repo ];
   built_config.set( &apos;derived:repo_info&apos;, repo_info );
 
   // - Download target
   built_config.set( &apos;derived:download_url&apos;, urljoin( repo_info.base_url, shape_data.base, shape_data.filename ) );
 
   // - SHA of the spec file, and output file.
-  sha = hash( built_config.get() );
+  const sha = hash( built_config.get() );
   built_config.set( &apos;derived:spec_sha1&apos;, sha );
-  built_config.set( &apos;derived:output_svg&apos;, path.join( &apos;output&apos;, sha + &apos;.svg&apos; ) );
+  built_config.set( &apos;derived:output_svg&apos;, path.join( &apos;output&apos;, `${sha}.svg` ) );
 
   // Store off the config as a &apos;normal&apos; object.
-  config = built_config.get();
+  const config = built_config.get();
   utils.log.debug( &apos;Full Config&apos;, config );
   return config;
 };
