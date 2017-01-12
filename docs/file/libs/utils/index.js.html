@@ -39,15 +39,14 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/utils/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-&apos;use strict&apos;;
 
-const
-  chalk = require( &apos;chalk&apos; ),
-  LOG_LEVEL = {
-    NONE: 0,
-    INFO: 1,
-    DEBUG: 3,
-  };
+const chalk = require( &apos;chalk&apos; );
+
+const LOG_LEVEL = {
+  NONE: 0,
+  INFO: 1,
+  DEBUG: 3,
+};
 
 // Export Log levels
 module.exports.LOG_LEVEL = LOG_LEVEL;
@@ -72,20 +71,18 @@ class Logger {
   static progress( tag, str ) {
     if ( process.env.LOG_LEVEL &gt;= LOG_LEVEL.INFO ) {
       if ( !str ) {
-        str = tag;
-        console.log( chalk.bold.cyan( str ) );
+        console.log( chalk.bold.cyan( tag ) );
       } else {
-        console.log( chalk.bold.cyan( tag ) + &apos; : &apos; + str );
+        console.log( `${chalk.bold.cyan( tag )} : ${str}` );
       }
     }
   }
   static info( tag, str ) {
     if ( process.env.LOG_LEVEL &gt;= LOG_LEVEL.INFO ) {
       if ( !str ) {
-        str = tag;
-        console.log( chalk.bold.yellow( str ) );
+        console.log( chalk.bold.yellow( tag ) );
       } else {
-        console.log( chalk.bold.yellow( tag ) + &apos; &apos; + str );
+        console.log( `${chalk.bold.yellow( tag )} ${str}` );
       }
     }
   }
@@ -96,9 +93,10 @@ class Logger {
   }
 
   // Debug log
-  static debug( tag, obj ) {
-    var
-      str;
+  static debug( tag_parm, obj_parm ) {
+    let str;
+    let obj = obj_parm;
+    let tag = tag_parm;
     if ( process.env.LOG_LEVEL &gt;= LOG_LEVEL.DEBUG ) {
       if ( !obj ) {
         obj = tag;

@@ -39,19 +39,17 @@
 
 <div class="content" data-ice="content"><h1 data-ice="title">libs/map-builder/index.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">#!/usr/bin/env node
-&apos;use strict&apos;;
 
-const
-  async = require( &apos;async&apos; ),
-  css = require( &apos;node-css&apos; ),
-  d3 = require( &apos;d3&apos; ),
-  download = require( &apos;download&apos; ),
-  fs = require( &apos;fs-extra&apos; ),
-  jsdom = require( &apos;jsdom&apos; ),
-  ogr2ogr = require( &apos;ogr2ogr&apos; ),
-  config = require( &apos;../config&apos; ),
-  projections = require( &apos;../projections&apos; ),
-  utils = require( &apos;../utils&apos; );
+const async = require( &apos;async&apos; );
+const css = require( &apos;node-css&apos; );
+const d3 = require( &apos;d3&apos; );
+const download = require( &apos;download&apos; );
+const fs = require( &apos;fs-extra&apos; );
+const jsdom = require( &apos;jsdom&apos; );
+const ogr2ogr = require( &apos;ogr2ogr&apos; );
+const config = require( &apos;../config&apos; );
+const projections = require( &apos;../projections&apos; );
+const utils = require( &apos;../utils&apos; );
 
 /**
  * Class for encapsulating a map building operation.
@@ -69,7 +67,7 @@ const
  */
 class MapBuilder {
   constructor() {
-    var self = this;
+    const self = this;
     self.config = {};
     self.data = {};
     self.spec_obj = {};
@@ -92,7 +90,8 @@ class MapBuilder {
   /**
    * Specify a success callback for this {@link MapBuilder}.
    *
-   * @param {function(data: string)} ok_cb - the success callback, passed the generated SVG as a string.
+   * @param {function(data: string)} ok_cb - the success callback, passed the
+   *                                         generated SVG as a string.
    */
   onSuccess( ok_cb ) {
     this.ok_cb = ok_cb;
@@ -162,7 +161,7 @@ class MapBuilder {
    * results.
    */
   build_map() {
-    var self = this;
+    const self = this;
     async.series( {
       build_config: ( callback ) =&gt; {
         utils.log.progress( &apos;Building config...&apos; );
@@ -170,7 +169,7 @@ class MapBuilder {
         callback( null );
       },
       check_for_existing_output: ( callback ) =&gt; {
-        fs.readFile( self.config.derived.output_svg, function( err, data ) {
+        fs.readFile( self.config.derived.output_svg, ( err, data ) =&gt; {
           if ( !err &amp;&amp; !self.force ) {
             utils.log.info( &apos;Output already generated&apos;, self.config.derived.output_svg );
             self.output_exists = true;
@@ -184,7 +183,7 @@ class MapBuilder {
           utils.log.progress( &apos;Checking data sources...&apos; );
           self.get_data_files( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       filter_data: ( callback ) =&gt; {
@@ -192,7 +191,7 @@ class MapBuilder {
           utils.log.progress( &apos;Filtering data...&apos; );
           self.filter_data( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       build_css: ( callback ) =&gt; {
@@ -200,7 +199,7 @@ class MapBuilder {
           utils.log.progress( &apos;Generating CSS...&apos; );
           self.build_css( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
       create_svg: ( callback ) =&gt; {
@@ -208,10 +207,10 @@ class MapBuilder {
           utils.log.progress( &apos;Creating SVG...&apos; );
           self.create_svg( callback );
         } else {
-          return callback( null );
+          callback( null );
         }
       },
-    }, function( err ) {
+    }, ( err ) =&gt; {
       if ( err ) {
         utils.log.error( &apos;Failed!&apos; );
         utils.log.error( err );
@@ -234,7 +233,7 @@ class MapBuilder {
    * results.
    */
   get_shape_info() {
-    var self = this;
+    const self = this;
     async.series( {
       build_config: ( callback ) =&gt; {
         utils.log.progress( &apos;Building config...&apos; );
@@ -251,7 +250,7 @@ class MapBuilder {
         // @@@ Get format from repo config?
         ogr2ogr( self.config.derived.shape_file )
           .format( &apos;GeoJSON&apos; )
-          .exec( function( err, geo_data ) {
+          .exec( ( err, geo_data ) =&gt; {
             if ( err ) {
               return callback( err );
             }
@@ -259,7 +258,7 @@ class MapBuilder {
             return callback( null );
           } );
       },
-    }, function( err ) {
+    }, ( err ) =&gt; {
       if ( err ) {
         utils.log.error( &apos;Failed!&apos; );
         utils.log.error( err );
@@ -280,24 +279,20 @@ class MapBuilder {
    * @access private
    */
   get_data_files( callback ) {
-    var self = this;
+    const self = this;
 
     // Get the destination and check for existing data.
     fs.access( self.config.derived.shape_dir, ( err ) =&gt; {
       if ( !err ) {
         utils.log.info( &apos;Data already available&apos;, self.config.derived.shape_dir );
-        return callback( null );
+        callback( null );
       } else {
         // Directory doesn&apos;t exist, proceed with download.
         utils.log.progress( &apos;Downloading data&apos;, self.config.derived.download_url );
         // @@@ Get extract value from spec file...
         download( self.config.derived.download_url, self.config.derived.shape_dir, {
           extract: true,
-        } ).then( () =&gt; {
-          return callback( null );
-        }, ( err ) =&gt; {
-          return callback( err );
-        } );
+        } ).then( () =&gt; callback( null ), dl_err =&gt; callback( dl_err ) );
       }
     } );
   }
@@ -307,14 +302,12 @@ class MapBuilder {
    * @access private
    */
   filter_data( callback ) {
-    var
-      self = this,
-      values,
-      options = [],
-      filter;
+    const self = this;
+    let options = [];
+    let values;
     utils.log.debug( &apos;Countries config&apos;, self.config.parameters.countries );
     utils.log.debug( &apos;Filter&apos;, self.config.parameters.filter );
-    filter = self.config.parameters.filter;
+    const filter = self.config.parameters.filter;
     if ( filter ) {
       switch ( filter.type ) {
       case &apos;countries&apos;:
@@ -322,14 +315,14 @@ class MapBuilder {
           return callback( &apos;Cannot filter on countries with no countries specified - use &quot;type: all&quot;&apos; );
         }
         values = Object.keys( self.config.parameters.countries ).join( &apos;\&apos;, \&apos;&apos; );
-        options = options.concat( [ &apos;-where&apos;, `${filter.key} IN (\&apos;${values}\&apos;)` ] );
+        options = options.concat( [ &apos;-where&apos;, `${filter.key} IN (&apos;${values}&apos;)` ] );
         break;
       case &apos;array&apos;:
         if ( !filter.array ) {
           return callback( &apos;Cannot filter on array with no elements specified&apos; );
         }
         values = filter.array.join( &apos;\&apos;, \&apos;&apos; );
-        options = options.concat( [ &apos;-where&apos;, `${filter.key} IN (\&apos;${values}\&apos;)` ] );
+        options = options.concat( [ &apos;-where&apos;, `${filter.key} IN (&apos;${values}&apos;)` ] );
         break;
       case &apos;all&apos;:
           // Include all countries - no filter
@@ -343,7 +336,7 @@ class MapBuilder {
     ogr2ogr( self.config.derived.shape_file )
       .format( &apos;GeoJSON&apos; )
       .options( options )
-      .exec( function( err, geo_data ) {
+      .exec( ( err, geo_data ) =&gt; {
         if ( err ) {
           return callback( err );
         }
@@ -357,22 +350,20 @@ class MapBuilder {
    * @access private
    */
   build_css( callback ) {
-    var
-      self = this,
-      base_style = self.config.style,
-      countries;
+    const self = this;
+    const base_style = self.config.style;
     Object.keys( base_style ).forEach( ( key ) =&gt; {
-      var data = base_style[ key ];
+      const data = base_style[ key ];
       if ( data ) {
         self.css_string += css( key, data );
       }
     } );
 
     // Per-country CSS.
-    countries = self.config.parameters.countries;
+    const countries = self.config.parameters.countries;
     if ( countries ) {
       Object.keys( countries ).forEach( ( key ) =&gt; {
-        var data = countries[ key ];
+        const data = countries[ key ];
         if ( data ) {
           self.css_string += css( `.ADM0_A3-${key}`, data );
         }
@@ -387,45 +378,39 @@ class MapBuilder {
    * @access private
    */
   create_svg( callback ) {
-    var self = this;
+    const self = this;
     // Use jsdom to create a fake DOM to work in.
     jsdom.env( &apos;&lt;body /&gt;&apos;,
-      function( err, window ) {
-        var
-          body,
-          svg,
-          path;
+      ( err, window ) =&gt; {
         if ( err ) {
           return callback( err );
         }
 
         // Create an SVG element for the map.
-        body = d3.select( window.document ).select( &apos;body&apos; );
-        svg = body.append( &apos;svg&apos; )
+        const body = d3.select( window.document ).select( &apos;body&apos; );
+        const svg = body.append( &apos;svg&apos; )
           .attr( &apos;width&apos;, self.config.parameters.projection.width )
           .attr( &apos;height&apos;, self.config.parameters.projection.height );
 
-        let {
+        const {
           proj_err,
           projection,
         } = projections.get_projection( self.config );
         if ( proj_err ) {
           return callback( proj_err );
         }
-        path = d3.geoPath()
+        const path = d3.geoPath()
           .projection( projection );
 
         // Add an appropriate class to each country.
         svg.selectAll( &apos;.country&apos; )
           .data( self.data.features )
           .enter().append( &apos;path&apos; )
-          .attr( &apos;class&apos;, function( d ) {
-            return [
-              &apos;ADM0_A3-&apos; + d.properties.ADM0_A3,
-              &apos;SU_A3-&apos; + d.properties.SU_A3,
-              &apos;GU_A3-&apos; + d.properties.GU_A3,
-            ].join( &apos; &apos; );
-          } )
+          .attr( &apos;class&apos;, d =&gt; [
+            `ADM0_A3-${d.properties.ADM0_A3}`,
+            `SU_A3-${d.properties.SU_A3}`,
+            `GU_A3-${d.properties.GU_A3}`,
+          ].join( &apos; &apos; ) )
           .attr( &apos;d&apos;, path );
 
         // Add in the CSS style.
@@ -437,13 +422,13 @@ class MapBuilder {
           fs.mkdirSync( &apos;output&apos; );
         }
         self.svg_text = body.html();
-        fs.writeFile( self.config.derived.output_svg, self.svg_text, function( err ) {
-          if ( err ) {
-            utils.log.error( err );
-            return callback( err );
+        fs.writeFile( self.config.derived.output_svg, self.svg_text, ( write_err ) =&gt; {
+          if ( write_err ) {
+            utils.log.error( write_err );
+            return callback( write_err );
           }
 
-          utils.log.info( &apos;Saved to &apos; + self.config.derived.output_svg );
+          utils.log.info( `Saved to ${self.config.derived.output_svg}` );
           return callback( null );
         } );
       }
