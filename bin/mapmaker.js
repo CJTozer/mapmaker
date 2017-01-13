@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const chalk = require( 'chalk' );
-const fs = require( 'fs-extra' );
+const fs = require( 'fs' );
 const program = require( 'commander' );
 const tabula = require( 'tabula' );
 const MapBuilder = require( '../libs/map-builder' );
