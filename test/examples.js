@@ -13,6 +13,7 @@ const expect = chai.expect;
 /* jshint expr: true */
 /* eslint no-unused-expressions: off */
 
+// Test we get some output generated for each example.
 describe( 'ExampleGeneration', function() {
   // Increase timeout - when running on a fresh system, downloads are required.
   this.timeout( 180000 );
@@ -44,6 +45,7 @@ describe( 'ExampleGeneration', function() {
   } );
 } );
 
+// Test the get_shape_info method.
 describe( 'ShapeInfo', function() {
   const spec_file = 'examples/europe.yaml';
   // Increase timeout - when running on a fresh system, downloads are required.
