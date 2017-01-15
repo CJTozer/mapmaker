@@ -4,7 +4,8 @@ const chalk = require( 'chalk' );
 
 const LOG_LEVEL = {
   NONE: 0,
-  INFO: 1,
+  ERROR: 1,
+  INFO: 2,
   DEBUG: 3,
 };
 
@@ -14,12 +15,16 @@ module.exports.LOG_LEVEL = LOG_LEVEL;
 // Static Logger class
 class Logger {
 
-  // Always displayed
-  static error( str ) {
-    console.log( chalk.bold.red( str ) );
-  }
+  // Always displayed.
   static output( str ) {
     console.log( chalk.bold( str ) );
+  }
+
+  // Error level.
+  static error( str ) {
+    if ( process.env.LOG_LEVEL >= LOG_LEVEL.ERROR ) {
+      console.log( chalk.bold.red( str ) );
+    }
   }
 
   // INFO level logs.

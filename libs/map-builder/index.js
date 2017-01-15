@@ -122,68 +122,79 @@ class MapBuilder {
    */
   build_map() {
     const self = this;
-    async.series( {
-      build_config: ( callback ) => {
-        utils.log.progress( 'Building config...' );
-        self.config = config.build_config( self.spec_file, self.spec_obj );
-        callback( null );
-      },
-      check_for_existing_output: ( callback ) => {
-        fs.readFile( self.config.derived.output_svg, ( err, data ) => {
-          if ( !err && !self.force ) {
-            utils.log.info( 'Output already generated', self.config.derived.output_svg );
-            self.output_exists = true;
-            self.svg_text = data;
+    try {
+      async.series( {
+        build_config: ( callback ) => {
+          utils.log.progress( 'Building config...' );
+          self.config = config.build_config( self.spec_file, self.spec_obj );
+          callback( null );
+        },
+        check_for_existing_output: ( callback ) => {
+          fs.readFile( self.config.derived.output_svg, ( err, data ) => {
+            if ( !err && !self.force ) {
+              utils.log.info( 'Output already generated', self.config.derived.output_svg );
+              self.output_exists = true;
+              self.svg_text = data;
+            }
+            return callback( null );
+          } );
+        },
+        get_data_files: ( callback ) => {
+          if ( !self.output_exists ) {
+            utils.log.progress( 'Checking data sources...' );
+            self.get_data_files( callback );
+          } else {
+            callback( null );
           }
-          return callback( null );
-        } );
-      },
-      get_data_files: ( callback ) => {
-        if ( !self.output_exists ) {
-          utils.log.progress( 'Checking data sources...' );
-          self.get_data_files( callback );
+        },
+        filter_data: ( callback ) => {
+          if ( !self.output_exists ) {
+            utils.log.progress( 'Filtering data...' );
+            self.filter_data( callback );
+          } else {
+            callback( null );
+          }
+        },
+        build_css: ( callback ) => {
+          if ( !self.output_exists ) {
+            utils.log.progress( 'Generating CSS...' );
+            self.build_css( callback );
+          } else {
+            callback( null );
+          }
+        },
+        create_svg: ( callback ) => {
+          if ( !self.output_exists ) {
+            utils.log.progress( 'Creating SVG...' );
+            self.create_svg( callback );
+          } else {
+            callback( null );
+          }
+        },
+      }, ( err ) => {
+        if ( err ) {
+          utils.log.error( 'Failed!' );
+          utils.log.error( err );
+          if ( self.err_cb ) {
+            self.err_cb( err );
+          }
         } else {
-          callback( null );
+          utils.log.success( 'Map Building Complete!' );
+          if ( self.ok_cb ) {
+            self.ok_cb( self.svg_text );
+          }
         }
-      },
-      filter_data: ( callback ) => {
-        if ( !self.output_exists ) {
-          utils.log.progress( 'Filtering data...' );
-          self.filter_data( callback );
-        } else {
-          callback( null );
-        }
-      },
-      build_css: ( callback ) => {
-        if ( !self.output_exists ) {
-          utils.log.progress( 'Generating CSS...' );
-          self.build_css( callback );
-        } else {
-          callback( null );
-        }
-      },
-      create_svg: ( callback ) => {
-        if ( !self.output_exists ) {
-          utils.log.progress( 'Creating SVG...' );
-          self.create_svg( callback );
-        } else {
-          callback( null );
-        }
-      },
-    }, ( err ) => {
-      if ( err ) {
-        utils.log.error( 'Failed!' );
-        utils.log.error( err );
-        if ( self.err_cb ) {
-          self.err_cb( err );
-        }
+      } );
+    } catch ( e ) {
+      // Catch all exceptions, throw only if no err_cb.
+      utils.log.error( 'Failed!' );
+      utils.log.error( e );
+      if ( self.err_cb ) {
+        self.err_cb( e );
       } else {
-        utils.log.success( 'Map Building Complete!' );
-        if ( self.ok_cb ) {
-          self.ok_cb( self.svg_text );
-        }
+        throw e;
       }
-    } );
+    }
   }
 
   /**
@@ -194,21 +205,22 @@ class MapBuilder {
    */
   get_shape_info() {
     const self = this;
-    async.series( {
-      build_config: ( callback ) => {
-        utils.log.progress( 'Building config...' );
-        self.config = config.build_config( self.spec_file, self.spec_obj );
-        callback( null );
-      },
-      get_data_files: ( callback ) => {
-        utils.log.progress( 'Checking data sources...' );
-        self.get_data_files( callback );
-      },
-      get_shape_info: ( callback ) => {
-        utils.log.progress( 'Getting shape info...' );
-        // @@@ Option to apply filter first.
-        // @@@ Get format from repo config?
-        ogr2ogr( self.config.derived.shape_file )
+    try {
+      async.series( {
+        build_config: ( callback ) => {
+          utils.log.progress( 'Building config...' );
+          self.config = config.build_config( self.spec_file, self.spec_obj );
+          callback( null );
+        },
+        get_data_files: ( callback ) => {
+          utils.log.progress( 'Checking data sources...' );
+          self.get_data_files( callback );
+        },
+        get_shape_info: ( callback ) => {
+          utils.log.progress( 'Getting shape info...' );
+          // @@@ Option to apply filter first.
+          // @@@ Get format from repo config?
+          ogr2ogr( self.config.derived.shape_file )
           .format( 'GeoJSON' )
           .exec( ( err, geo_data ) => {
             if ( err ) {
@@ -217,21 +229,31 @@ class MapBuilder {
             self.data = geo_data;
             return callback( null );
           } );
-      },
-    }, ( err ) => {
-      if ( err ) {
-        utils.log.error( 'Failed!' );
-        utils.log.error( err );
-        if ( self.err_cb ) {
-          self.err_cb( err );
+        },
+      }, ( err ) => {
+        if ( err ) {
+          utils.log.error( 'Failed!' );
+          utils.log.error( err );
+          if ( self.err_cb ) {
+            self.err_cb( err );
+          }
+        } else {
+          utils.log.success( 'Parsed shape info!' );
+          if ( self.ok_cb ) {
+            self.ok_cb( self.data );
+          }
         }
+      } );
+    } catch ( e ) {
+      // Catch all exceptions, throw only if no err_cb.
+      utils.log.error( 'Failed!' );
+      utils.log.error( e );
+      if ( self.err_cb ) {
+        self.err_cb( e );
       } else {
-        utils.log.success( 'Parsed shape info!' );
-        if ( self.ok_cb ) {
-          self.ok_cb( self.data );
-        }
+        throw e;
       }
-    } );
+    }
   }
 
   /**
