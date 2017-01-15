@@ -162,68 +162,79 @@ class MapBuilder {
    */
   build_map() {
     const self = this;
-    async.series( {
-      build_config: ( callback ) =&gt; {
-        utils.log.progress( &apos;Building config...&apos; );
-        self.config = config.build_config( self.spec_file, self.spec_obj );
-        callback( null );
-      },
-      check_for_existing_output: ( callback ) =&gt; {
-        fs.readFile( self.config.derived.output_svg, ( err, data ) =&gt; {
-          if ( !err &amp;&amp; !self.force ) {
-            utils.log.info( &apos;Output already generated&apos;, self.config.derived.output_svg );
-            self.output_exists = true;
-            self.svg_text = data;
+    try {
+      async.series( {
+        build_config: ( callback ) =&gt; {
+          utils.log.progress( &apos;Building config...&apos; );
+          self.config = config.build_config( self.spec_file, self.spec_obj );
+          callback( null );
+        },
+        check_for_existing_output: ( callback ) =&gt; {
+          fs.readFile( self.config.derived.output_svg, ( err, data ) =&gt; {
+            if ( !err &amp;&amp; !self.force ) {
+              utils.log.info( &apos;Output already generated&apos;, self.config.derived.output_svg );
+              self.output_exists = true;
+              self.svg_text = data;
+            }
+            return callback( null );
+          } );
+        },
+        get_data_files: ( callback ) =&gt; {
+          if ( !self.output_exists ) {
+            utils.log.progress( &apos;Checking data sources...&apos; );
+            self.get_data_files( callback );
+          } else {
+            callback( null );
           }
-          return callback( null );
-        } );
-      },
-      get_data_files: ( callback ) =&gt; {
-        if ( !self.output_exists ) {
-          utils.log.progress( &apos;Checking data sources...&apos; );
-          self.get_data_files( callback );
+        },
+        filter_data: ( callback ) =&gt; {
+          if ( !self.output_exists ) {
+            utils.log.progress( &apos;Filtering data...&apos; );
+            self.filter_data( callback );
+          } else {
+            callback( null );
+          }
+        },
+        build_css: ( callback ) =&gt; {
+          if ( !self.output_exists ) {
+            utils.log.progress( &apos;Generating CSS...&apos; );
+            self.build_css( callback );
+          } else {
+            callback( null );
+          }
+        },
+        create_svg: ( callback ) =&gt; {
+          if ( !self.output_exists ) {
+            utils.log.progress( &apos;Creating SVG...&apos; );
+            self.create_svg( callback );
+          } else {
+            callback( null );
+          }
+        },
+      }, ( err ) =&gt; {
+        if ( err ) {
+          utils.log.error( &apos;Failed!&apos; );
+          utils.log.error( err );
+          if ( self.err_cb ) {
+            self.err_cb( err );
+          }
         } else {
-          callback( null );
+          utils.log.success( &apos;Map Building Complete!&apos; );
+          if ( self.ok_cb ) {
+            self.ok_cb( self.svg_text );
+          }
         }
-      },
-      filter_data: ( callback ) =&gt; {
-        if ( !self.output_exists ) {
-          utils.log.progress( &apos;Filtering data...&apos; );
-          self.filter_data( callback );
-        } else {
-          callback( null );
-        }
-      },
-      build_css: ( callback ) =&gt; {
-        if ( !self.output_exists ) {
-          utils.log.progress( &apos;Generating CSS...&apos; );
-          self.build_css( callback );
-        } else {
-          callback( null );
-        }
-      },
-      create_svg: ( callback ) =&gt; {
-        if ( !self.output_exists ) {
-          utils.log.progress( &apos;Creating SVG...&apos; );
-          self.create_svg( callback );
-        } else {
-          callback( null );
-        }
-      },
-    }, ( err ) =&gt; {
-      if ( err ) {
-        utils.log.error( &apos;Failed!&apos; );
-        utils.log.error( err );
-        if ( self.err_cb ) {
-          self.err_cb( err );
-        }
+      } );
+    } catch ( e ) {
+      // Catch all exceptions, throw only if no err_cb.
+      utils.log.error( &apos;Failed!&apos; );
+      utils.log.error( e );
+      if ( self.err_cb ) {
+        self.err_cb( e );
       } else {
-        utils.log.success( &apos;Map Building Complete!&apos; );
-        if ( self.ok_cb ) {
-          self.ok_cb( self.svg_text );
-        }
+        throw e;
       }
-    } );
+    }
   }
 
   /**
@@ -234,21 +245,22 @@ class MapBuilder {
    */
   get_shape_info() {
     const self = this;
-    async.series( {
-      build_config: ( callback ) =&gt; {
-        utils.log.progress( &apos;Building config...&apos; );
-        self.config = config.build_config( self.spec_file, self.spec_obj );
-        callback( null );
-      },
-      get_data_files: ( callback ) =&gt; {
-        utils.log.progress( &apos;Checking data sources...&apos; );
-        self.get_data_files( callback );
-      },
-      get_shape_info: ( callback ) =&gt; {
-        utils.log.progress( &apos;Getting shape info...&apos; );
-        // @@@ Option to apply filter first.
-        // @@@ Get format from repo config?
-        ogr2ogr( self.config.derived.shape_file )
+    try {
+      async.series( {
+        build_config: ( callback ) =&gt; {
+          utils.log.progress( &apos;Building config...&apos; );
+          self.config = config.build_config( self.spec_file, self.spec_obj );
+          callback( null );
+        },
+        get_data_files: ( callback ) =&gt; {
+          utils.log.progress( &apos;Checking data sources...&apos; );
+          self.get_data_files( callback );
+        },
+        get_shape_info: ( callback ) =&gt; {
+          utils.log.progress( &apos;Getting shape info...&apos; );
+          // @@@ Option to apply filter first.
+          // @@@ Get format from repo config?
+          ogr2ogr( self.config.derived.shape_file )
           .format( &apos;GeoJSON&apos; )
           .exec( ( err, geo_data ) =&gt; {
             if ( err ) {
@@ -257,21 +269,31 @@ class MapBuilder {
             self.data = geo_data;
             return callback( null );
           } );
-      },
-    }, ( err ) =&gt; {
-      if ( err ) {
-        utils.log.error( &apos;Failed!&apos; );
-        utils.log.error( err );
-        if ( self.err_cb ) {
-          self.err_cb( err );
+        },
+      }, ( err ) =&gt; {
+        if ( err ) {
+          utils.log.error( &apos;Failed!&apos; );
+          utils.log.error( err );
+          if ( self.err_cb ) {
+            self.err_cb( err );
+          }
+        } else {
+          utils.log.success( &apos;Parsed shape info!&apos; );
+          if ( self.ok_cb ) {
+            self.ok_cb( self.data );
+          }
         }
+      } );
+    } catch ( e ) {
+      // Catch all exceptions, throw only if no err_cb.
+      utils.log.error( &apos;Failed!&apos; );
+      utils.log.error( e );
+      if ( self.err_cb ) {
+        self.err_cb( e );
       } else {
-        utils.log.success( &apos;Parsed shape info!&apos; );
-        if ( self.ok_cb ) {
-          self.ok_cb( self.data );
-        }
+        throw e;
       }
-    } );
+    }
   }
 
   /**
